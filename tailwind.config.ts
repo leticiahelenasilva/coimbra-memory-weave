@@ -57,6 +57,25 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        ink: "hsl(var(--ink))",
+        paper: "hsl(var(--paper))",
+        yellow: {
+          DEFAULT: "hsl(var(--yellow))",
+          soft: "hsl(var(--yellow-soft))",
+        },
+        lilac: {
+          DEFAULT: "hsl(var(--lilac))",
+          deep: "hsl(var(--lilac-deep))",
+        },
+        whisper: "hsl(var(--whisper-blue))",
+      },
+      fontFamily: {
+        serif: ['"Cormorant Garamond"', 'Times New Roman', 'serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      transitionTimingFunction: {
+        silk: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
       borderRadius: {
         lg: "var(--radius)",
