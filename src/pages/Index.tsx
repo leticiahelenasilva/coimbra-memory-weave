@@ -59,7 +59,9 @@ const Index = () => {
           {step === "sent" && (
             <Sent
               memory={memory}
-              onAgain={() => { setMemory(""); setStep("mural"); }}
+              extraMemories={extraMemories}
+              onAgain={() => { setMemory(""); setStep("recording"); }}
+              onHome={() => { setMemory(""); setStep("onboarding"); }}
             />
           )}
         </motion.div>

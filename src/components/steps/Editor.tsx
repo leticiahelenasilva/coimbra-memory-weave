@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Hand, Send, Type } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Download, Hand, Mail, Send, Type } from "lucide-react";
+import { toPng } from "html-to-image";
 import { Stamp } from "../Stamp";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { toast } from "sonner";
 
 interface Props {
   memory: string;
@@ -38,6 +41,9 @@ export const Editor = ({ memory, onSend }: Props) => {
   const [paletteIdx, setPaletteIdx] = useState(0);
   const [fontIdx, setFontIdx] = useState(0);
   const [flying, setFlying] = useState(false);
+  const [sender, setSender] = useState("anónimo");
+  const [destination, setDestination] = useState("quem ler depois de mim");
+  const postcardRef = useRef<HTMLDivElement>(null);
 
   const palette = PALETTES[paletteIdx];
   const font = FONTS[fontIdx];
@@ -52,10 +58,12 @@ export const Editor = ({ memory, onSend }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, interim, flying]);
 
-  // Keyboard arrows mock hand-swipes
+  // Keyboard arrows mock hand-swipes (skip when typing in inputs)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (flying) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
       if (e.key === "ArrowRight") setPaletteIdx((i) => (i + 1) % PALETTES.length);
       if (e.key === "ArrowLeft")  setFontIdx((i) => (i + 1) % FONTS.length);
     };
@@ -66,6 +74,33 @@ export const Editor = ({ memory, onSend }: Props) => {
   const handleSend = () => {
     setFlying(true);
     setTimeout(() => onSend(palette, font.key), 1500);
+  };
+
+  const handleDownload = async () => {
+    if (!postcardRef.current) return;
+    try {
+      const dataUrl = await toPng(postcardRef.current, {
+        pixelRatio: 2,
+        backgroundColor: palette.bg,
+        cacheBust: true,
+      });
+      const link = document.createElement("a");
+      link.download = `postal-coimbra-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success("postal guardado no computador");
+    } catch (err) {
+      console.error(err);
+      toast.error("não foi possível gerar o png");
+    }
+  };
+
+  const handleEmail = () => {
+    const subject = encodeURIComponent("um postal de Coimbra para ti");
+    const body = encodeURIComponent(
+      `o que fica de Coimbra é ${memory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}\n\n(podes guardar a imagem do postal a partir da app — botão "guardar png")`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -81,6 +116,7 @@ export const Editor = ({ memory, onSend }: Props) => {
         {/* Postcard */}
         <div className="lg:col-span-8">
           <motion.div
+            ref={postcardRef}
             key={`${paletteIdx}-${fontIdx}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -115,11 +151,11 @@ export const Editor = ({ memory, onSend }: Props) => {
                 <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
                   remetente
                 </div>
-                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>anónimo</p>
+                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{sender || "anónimo"}</p>
                 <div className="mt-4 font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
                   destino
                 </div>
-                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>quem ler depois de mim</p>
+                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{destination || "quem ler depois de mim"}</p>
               </div>
             </div>
 
@@ -211,14 +247,64 @@ export const Editor = ({ memory, onSend }: Props) => {
               </div>
             </div>
 
+            <div className="ticket-divide my-5 h-px" />
+
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1.5 block font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
+                  remetente
+                </label>
+                <Input
+                  value={sender}
+                  onChange={(e) => setSender(e.target.value)}
+                  placeholder="anónimo"
+                  maxLength={40}
+                  className="h-10 rounded-xl font-serif italic"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
+                  destino
+                </label>
+                <Input
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  placeholder="quem ler depois de mim"
+                  maxLength={50}
+                  className="h-10 rounded-xl font-serif italic"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <Button
+                onClick={handleDownload}
+                disabled={flying}
+                variant="outline"
+                className="h-11 rounded-full border-ink/20 hover:border-ink"
+              >
+                <Download className="mr-1.5 h-4 w-4" />
+                guardar png
+              </Button>
+              <Button
+                onClick={handleEmail}
+                disabled={flying}
+                variant="outline"
+                className="h-11 rounded-full border-ink/20 hover:border-ink"
+              >
+                <Mail className="mr-1.5 h-4 w-4" />
+                enviar email
+              </Button>
+            </div>
+
             <Button
               onClick={handleSend}
               disabled={flying}
               size="lg"
-              className="mt-6 h-14 w-full rounded-full bg-ink text-paper hover:bg-ink/90"
+              className="mt-3 h-14 w-full rounded-full bg-ink text-paper hover:bg-ink/90"
             >
               <Send className="mr-2 h-4 w-4" />
-              enviar
+              enviar para o mural
             </Button>
           </div>
         </div>
