@@ -58,10 +58,12 @@ export const Editor = ({ memory, onSend }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, interim, flying]);
 
-  // Keyboard arrows mock hand-swipes
+  // Keyboard arrows mock hand-swipes (skip when typing in inputs)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (flying) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
       if (e.key === "ArrowRight") setPaletteIdx((i) => (i + 1) % PALETTES.length);
       if (e.key === "ArrowLeft")  setFontIdx((i) => (i + 1) % FONTS.length);
     };
@@ -72,6 +74,33 @@ export const Editor = ({ memory, onSend }: Props) => {
   const handleSend = () => {
     setFlying(true);
     setTimeout(() => onSend(palette, font.key), 1500);
+  };
+
+  const handleDownload = async () => {
+    if (!postcardRef.current) return;
+    try {
+      const dataUrl = await toPng(postcardRef.current, {
+        pixelRatio: 2,
+        backgroundColor: palette.bg,
+        cacheBust: true,
+      });
+      const link = document.createElement("a");
+      link.download = `postal-coimbra-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success("postal guardado no computador");
+    } catch (err) {
+      console.error(err);
+      toast.error("não foi possível gerar o png");
+    }
+  };
+
+  const handleEmail = () => {
+    const subject = encodeURIComponent("um postal de Coimbra para ti");
+    const body = encodeURIComponent(
+      `o que fica de Coimbra é ${memory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}\n\n(podes guardar a imagem do postal a partir da app — botão "guardar png")`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   return (
