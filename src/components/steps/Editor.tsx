@@ -41,6 +41,9 @@ export const Editor = ({ memory, onSend }: Props) => {
   const [paletteIdx, setPaletteIdx] = useState(0);
   const [fontIdx, setFontIdx] = useState(0);
   const [flying, setFlying] = useState(false);
+  const [sender, setSender] = useState("anónimo");
+  const [destination, setDestination] = useState("quem ler depois de mim");
+  const postcardRef = useRef<HTMLDivElement>(null);
 
   const palette = PALETTES[paletteIdx];
   const font = FONTS[fontIdx];
