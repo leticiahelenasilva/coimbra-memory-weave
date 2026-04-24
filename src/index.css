@@ -2,94 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* O que fica de Coimbra — Design System
+   All colors MUST be HSL.
 */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Editorial off-white base */
+    --background: 60 20% 97%;        /* #F9F9F7 */
+    --foreground: 30 8% 12%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 60 20% 97%;
+    --card-foreground: 30 8% 12%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 60 20% 97%;
+    --popover-foreground: 30 8% 12%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Vibrant yellow as primary accent */
+    --primary: 60 100% 50%;          /* #FFFF00 */
+    --primary-foreground: 30 8% 12%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Soft lilac for stamps + secondary */
+    --secondary: 270 45% 86%;
+    --secondary-foreground: 270 30% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 50 12% 92%;
+    --muted-foreground: 30 6% 42%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 270 45% 86%;           /* lilac */
+    --accent-foreground: 270 30% 25%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 60 20% 97%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 30 8% 88%;
+    --input: 30 8% 88%;
+    --ring: 60 100% 45%;
 
-    --radius: 0.5rem;
+    /* Brand specifics */
+    --ink: 30 8% 12%;
+    --paper: 60 20% 97%;
+    --paper-shadow: 30 10% 80%;
+    --yellow: 60 100% 50%;
+    --yellow-soft: 55 100% 70%;
+    --lilac: 270 45% 86%;
+    --lilac-deep: 270 40% 65%;
+    --whisper-blue: 220 50% 65%;
+
+    /* Gradients */
+    --gradient-fog: radial-gradient(ellipse at 50% 80%, hsl(220 30% 90% / 0.6), transparent 60%);
+    --gradient-paper: linear-gradient(180deg, hsl(60 25% 98%), hsl(50 15% 94%));
+    --gradient-stamp: linear-gradient(135deg, hsl(var(--lilac)), hsl(var(--lilac-deep)));
+
+    /* Shadows — paper-like */
+    --shadow-postcard: 0 1px 2px hsl(30 10% 50% / 0.08), 0 20px 40px -20px hsl(30 10% 30% / 0.25);
+    --shadow-soft: 0 2px 12px hsl(30 10% 30% / 0.06);
+
+    --transition-silk: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --radius: 1.25rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -99,7 +80,88 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html, body, #root {
+    height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .font-serif-display {
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    letter-spacing: -0.02em;
+  }
+  .font-mono-ui {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.02em;
+  }
+
+  .text-balance { text-wrap: balance; }
+
+  /* Stamp pill (lilac) */
+  .stamp {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 font-mono-ui text-[11px] uppercase tracking-[0.18em];
+    background: hsl(var(--lilac) / 0.55);
+    color: hsl(var(--lilac-deep));
+    border: 1px dashed hsl(var(--lilac-deep) / 0.5);
+  }
+
+  /* Highlighter behind serif words */
+  .highlight-yellow {
+    background-image: linear-gradient(180deg, transparent 55%, hsl(var(--yellow) / 0.85) 55%);
+    padding: 0 0.15em;
+  }
+
+  /* Paper card */
+  .paper {
+    background: var(--gradient-paper);
+    box-shadow: var(--shadow-postcard);
+  }
+
+  /* Animated fog */
+  .fog-layer {
+    background: var(--gradient-fog);
+    filter: blur(40px);
+  }
+
+  /* Postcard fly-away */
+  @keyframes fly-away {
+    0%   { transform: translate3d(0,0,0) rotate(0); opacity: 1; }
+    40%  { transform: translate3d(20vw,-10vh,0) rotate(8deg); opacity: 1; }
+    100% { transform: translate3d(140vw,-60vh,0) rotate(35deg); opacity: 0; }
+  }
+  .animate-fly-away { animation: fly-away 1.6s var(--transition-silk) forwards; }
+
+  @keyframes drift {
+    0%, 100% { transform: translate3d(0,0,0); }
+    50% { transform: translate3d(var(--dx, 8px), var(--dy, -10px), 0); }
+  }
+  .animate-drift { animation: drift var(--dur, 9s) ease-in-out infinite; }
+
+  @keyframes fog-shift {
+    0%   { transform: translate3d(-5%, 0, 0) scale(1.1); }
+    50%  { transform: translate3d(5%, -2%, 0) scale(1.2); }
+    100% { transform: translate3d(-5%, 0, 0) scale(1.1); }
+  }
+  .animate-fog { animation: fog-shift 18s ease-in-out infinite; }
+
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 hsl(var(--yellow) / 0.55); }
+    100% { box-shadow: 0 0 0 28px hsl(var(--yellow) / 0); }
+  }
+  .animate-pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
+
+  /* Dotted divider like ticket stub */
+  .ticket-divide {
+    background-image: radial-gradient(circle, hsl(var(--ink) / 0.35) 1px, transparent 1.5px);
+    background-size: 8px 1px;
+    background-repeat: repeat-x;
+    background-position: center;
   }
 }
