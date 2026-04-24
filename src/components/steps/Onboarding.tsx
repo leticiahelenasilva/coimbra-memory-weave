@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Camera, Mic } from "lucide-react";
-import { Fog } from "./Fog";
-import { Stamp } from "./Stamp";
+import { Fog } from "../Fog";
+import { Stamp } from "../Stamp";
 import { Button } from "@/components/ui/button";
 
 interface Props {
