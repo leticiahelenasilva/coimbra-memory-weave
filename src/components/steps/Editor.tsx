@@ -87,6 +87,7 @@ export const Editor = ({ memory, onSend }: Props) => {
         {/* Postcard */}
         <div className="lg:col-span-8">
           <motion.div
+            ref={postcardRef}
             key={`${paletteIdx}-${fontIdx}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -121,11 +122,11 @@ export const Editor = ({ memory, onSend }: Props) => {
                 <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
                   remetente
                 </div>
-                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>anónimo</p>
+                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{sender || "anónimo"}</p>
                 <div className="mt-4 font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
                   destino
                 </div>
-                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>quem ler depois de mim</p>
+                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{destination || "quem ler depois de mim"}</p>
               </div>
             </div>
 
