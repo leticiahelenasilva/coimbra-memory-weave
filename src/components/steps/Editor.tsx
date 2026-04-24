@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Hand, Send, Type } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Download, Hand, Mail, Send, Type } from "lucide-react";
+import { toPng } from "html-to-image";
 import { Stamp } from "../Stamp";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { toast } from "sonner";
 
 interface Props {
   memory: string;
