@@ -247,14 +247,64 @@ export const Editor = ({ memory, onSend }: Props) => {
               </div>
             </div>
 
+            <div className="ticket-divide my-5 h-px" />
+
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1.5 block font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
+                  remetente
+                </label>
+                <Input
+                  value={sender}
+                  onChange={(e) => setSender(e.target.value)}
+                  placeholder="anónimo"
+                  maxLength={40}
+                  className="h-10 rounded-xl font-serif italic"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
+                  destino
+                </label>
+                <Input
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  placeholder="quem ler depois de mim"
+                  maxLength={50}
+                  className="h-10 rounded-xl font-serif italic"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <Button
+                onClick={handleDownload}
+                disabled={flying}
+                variant="outline"
+                className="h-11 rounded-full border-ink/20 hover:border-ink"
+              >
+                <Download className="mr-1.5 h-4 w-4" />
+                guardar png
+              </Button>
+              <Button
+                onClick={handleEmail}
+                disabled={flying}
+                variant="outline"
+                className="h-11 rounded-full border-ink/20 hover:border-ink"
+              >
+                <Mail className="mr-1.5 h-4 w-4" />
+                enviar email
+              </Button>
+            </div>
+
             <Button
               onClick={handleSend}
               disabled={flying}
               size="lg"
-              className="mt-6 h-14 w-full rounded-full bg-ink text-paper hover:bg-ink/90"
+              className="mt-3 h-14 w-full rounded-full bg-ink text-paper hover:bg-ink/90"
             >
               <Send className="mr-2 h-4 w-4" />
-              enviar
+              enviar para o mural
             </Button>
           </div>
         </div>
