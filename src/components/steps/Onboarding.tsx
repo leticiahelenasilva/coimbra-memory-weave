@@ -44,6 +44,19 @@ export const Onboarding = ({ onBegin }: Props) => {
             — e parta com o vento do Mondego.
           </p>
 
+          <div className="mt-8 max-w-xl rounded-2xl border border-border bg-card/40 p-5 backdrop-blur-sm">
+            <p className="mb-2 font-mono-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+              sobre o projeto
+            </p>
+            <p className="font-serif text-base leading-relaxed text-ink/80">
+              <span className="font-medium text-ink">O que fica de Coimbra</span> é um
+              memorial digital interativo que recolhe vozes de quem viveu, passou ou
+              sonhou esta cidade. Cada memória é gravada, transformada em tipografia
+              generativa e enviada como um postal — para o mural coletivo e para
+              quem vier depois. Uma colaboração entre voz, gesto e papel.
+            </p>
+          </div>
+
           <div className="mt-12 flex flex-wrap items-center gap-4">
             <Button
               onClick={onBegin}
