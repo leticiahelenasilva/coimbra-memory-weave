@@ -151,6 +151,21 @@
   }
   .animate-fog { animation: fog-shift 18s ease-in-out infinite; }
 
+  /* Horizontal marquee for the mural */
+  @keyframes marquee-left {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+  @keyframes marquee-right {
+    0%   { transform: translate3d(-50%, 0, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+  .animate-marquee-left  { animation: marquee-left  var(--marquee-dur, 60s) linear infinite; }
+  .animate-marquee-right { animation: marquee-right var(--marquee-dur, 60s) linear infinite; }
+
+  /* Pause marquee while hovering its track */
+  .marquee-track:hover .marquee-inner { animation-play-state: paused; }
+
   @keyframes pulse-ring {
     0% { box-shadow: 0 0 0 0 hsl(var(--yellow) / 0.55); }
     100% { box-shadow: 0 0 0 28px hsl(var(--yellow) / 0); }
