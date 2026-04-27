@@ -262,34 +262,74 @@ export const Onboarding = ({ onBegin }: Props) => {
             </p>
           </div>
 
-          <div className="relative min-h-[60vh] rounded-[2rem] border border-border bg-card/30 p-10">
-            <div className="flex flex-wrap gap-x-8 gap-y-5">
-              {SEED_MEMORIES.map((m, i) => {
-                const r = ((Math.sin((i + 1) * 12.9898) + 1) / 2);
-                const italic = r > 0.5;
-                const scale = 0.85 + r * 0.7;
-                return (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, y: 8 }}
-                    whileInView={{ opacity: 0.55, y: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.6, delay: i * 0.02 }}
-                    whileHover={{ opacity: 1, scale: scale * 1.05 }}
-                    className="cursor-default whitespace-nowrap text-ink transition-all"
-                    style={{
-                      fontFamily: '"Cormorant Garamond", serif',
-                      fontStyle: italic ? "italic" : "normal",
-                      fontSize: `${scale}rem`,
-                    }}
-                  >
-                    {m}
-                  </motion.span>
-                );
-              })}
-            </div>
+          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-card/30 py-12">
+            {/* fade edges */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-background to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-background to-transparent" />
 
-            <div className="mt-10 flex items-center justify-center">
+            {(() => {
+              // Split memories into 3 rows, each scrolling at a different speed/direction
+              const rows = [0, 1, 2].map((row) =>
+                SEED_MEMORIES.filter((_, i) => i % 3 === row)
+              );
+              const configs = [
+                { dir: "left",  dur: "55s", size: 1.7, italic: false },
+                { dir: "right", dur: "75s", size: 2.2, italic: true  },
+                { dir: "left",  dur: "65s", size: 1.4, italic: false },
+              ] as const;
+
+              return (
+                <div className="space-y-6">
+                  {rows.map((items, rIdx) => {
+                    const cfg = configs[rIdx];
+                    // Duplicate items so the loop is seamless
+                    const loop = [...items, ...items];
+                    return (
+                      <div
+                        key={rIdx}
+                        className="marquee-track group relative flex w-full overflow-hidden"
+                      >
+                        <div
+                          className={`marquee-inner flex shrink-0 items-center gap-12 pr-12 ${
+                            cfg.dir === "left" ? "animate-marquee-left" : "animate-marquee-right"
+                          }`}
+                          style={{ ['--marquee-dur' as string]: cfg.dur }}
+                        >
+                          {loop.map((m, i) => (
+                            <span
+                              key={`${rIdx}-${i}`}
+                              className="memory-item cursor-default whitespace-nowrap text-ink transition-[filter,opacity,color] duration-300"
+                              style={{
+                                fontFamily: '"Cormorant Garamond", serif',
+                                fontStyle: cfg.italic ? "italic" : "normal",
+                                fontSize: `${cfg.size}rem`,
+                                filter: "blur(4px)",
+                                opacity: 0.45,
+                              }}
+                              onMouseEnter={(e) => {
+                                const el = e.currentTarget;
+                                el.style.filter = "blur(0px)";
+                                el.style.opacity = "1";
+                              }}
+                              onMouseLeave={(e) => {
+                                const el = e.currentTarget;
+                                el.style.filter = "blur(4px)";
+                                el.style.opacity = "0.45";
+                              }}
+                            >
+                              <span className="hover-highlight">{m}</span>
+                              <span className="ml-12 select-none text-muted-foreground/40">·</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            <div className="mt-12 flex items-center justify-center">
               <Button
                 onClick={onBegin}
                 size="lg"
