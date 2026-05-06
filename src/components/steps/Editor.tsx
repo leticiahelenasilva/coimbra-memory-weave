@@ -1,79 +1,63 @@
-import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Download, Hand, Mail, Send, Type } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Download, Hand, Mail, Send, Sparkles } from "lucide-react";
 import { toPng } from "html-to-image";
 import { Stamp } from "../Stamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { toast } from "sonner";
+import { detectEmotion, Variant } from "@/data/emotions";
 
 interface Props {
   memory: string;
-  onSend: (palette: Palette, fontKey: FontKey) => void;
+  onSend: () => void;
 }
 
-export type Palette = {
-  name: string;
-  bg: string;
-  ink: string;
-  accent: string;
-};
-
-export type FontKey = "serif" | "italic" | "mono" | "sans";
-
-const PALETTES: Palette[] = [
-  { name: "papel · amarelo", bg: "hsl(60 20% 97%)", ink: "hsl(30 8% 12%)", accent: "hsl(60 100% 50%)" },
-  { name: "lilás · tinta", bg: "hsl(270 45% 92%)", ink: "hsl(270 40% 20%)", accent: "hsl(270 50% 55%)" },
-  { name: "rio · névoa",   bg: "hsl(220 30% 94%)", ink: "hsl(220 40% 18%)", accent: "hsl(220 60% 60%)" },
-  { name: "tijolo · sol",  bg: "hsl(28 45% 92%)",  ink: "hsl(20 30% 18%)",  accent: "hsl(14 80% 55%)" },
-  { name: "noite · fado",  bg: "hsl(30 10% 14%)",  ink: "hsl(50 20% 92%)",  accent: "hsl(50 95% 60%)" },
-];
-
-const FONTS: { key: FontKey; label: string; cls: string; italic?: boolean }[] = [
-  { key: "serif",  label: "serif clássico", cls: "font-serif" },
-  { key: "italic", label: "serif itálico",  cls: "font-serif italic", italic: true },
-  { key: "mono",   label: "mono editorial", cls: "font-mono" },
-  { key: "sans",   label: "sans moderno",   cls: "font-sans" },
-];
-
 export const Editor = ({ memory, onSend }: Props) => {
-  const [paletteIdx, setPaletteIdx] = useState(0);
-  const [fontIdx, setFontIdx] = useState(0);
+  const emotion = useMemo(() => detectEmotion(memory), [memory]);
+  const variants = emotion.variants;
+
+  const [variantIdx, setVariantIdx] = useState(0);
   const [flying, setFlying] = useState(false);
   const [sender, setSender] = useState("anónimo");
   const [destination, setDestination] = useState("quem ler depois de mim");
+  const [swipeHint, setSwipeHint] = useState<"left" | "right" | null>(null);
   const postcardRef = useRef<HTMLDivElement>(null);
 
-  const palette = PALETTES[paletteIdx];
-  const font = FONTS[fontIdx];
+  const variant: Variant = variants[variantIdx];
 
   // Voice command "enviar"
   const { transcript, interim } = useSpeechRecognition({ enabled: !flying, lang: "pt-PT" });
   useEffect(() => {
     const all = (transcript + " " + interim).toLowerCase();
-    if (all.includes("enviar") && !flying) {
-      handleSend();
-    }
+    if (all.includes("enviar") && !flying) handleSend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, interim, flying]);
 
-  // Keyboard arrows mock hand-swipes (skip when typing in inputs)
+  const cycle = (dir: 1 | -1) => {
+    setSwipeHint(dir === 1 ? "right" : "left");
+    setVariantIdx((i) => (i + dir + variants.length) % variants.length);
+    window.setTimeout(() => setSwipeHint(null), 350);
+  };
+
+  // Keyboard arrows = mock hand swipes
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (flying) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
-      if (e.key === "ArrowRight") setPaletteIdx((i) => (i + 1) % PALETTES.length);
-      if (e.key === "ArrowLeft")  setFontIdx((i) => (i + 1) % FONTS.length);
+      if (e.key === "ArrowRight") cycle(1);
+      if (e.key === "ArrowLeft") cycle(-1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flying]);
 
   const handleSend = () => {
     setFlying(true);
-    setTimeout(() => onSend(palette, font.key), 1500);
+    setTimeout(() => onSend(), 1500);
   };
 
   const handleDownload = async () => {
@@ -81,11 +65,11 @@ export const Editor = ({ memory, onSend }: Props) => {
     try {
       const dataUrl = await toPng(postcardRef.current, {
         pixelRatio: 2,
-        backgroundColor: palette.bg,
+        backgroundColor: variant.bg,
         cacheBust: true,
       });
       const link = document.createElement("a");
-      link.download = `postal-coimbra-${Date.now()}.png`;
+      link.download = `postal-coimbra-${emotion.key}-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
       toast.success("postal guardado no computador");
@@ -98,7 +82,7 @@ export const Editor = ({ memory, onSend }: Props) => {
   const handleEmail = () => {
     const subject = encodeURIComponent("um postal de Coimbra para ti");
     const body = encodeURIComponent(
-      `o que fica de Coimbra é ${memory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}\n\n(podes guardar a imagem do postal a partir da app — botão "guardar png")`
+      `o que fica de Coimbra é ${memory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
@@ -115,136 +99,115 @@ export const Editor = ({ memory, onSend }: Props) => {
       <div className="mx-auto mt-6 grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-12">
         {/* Postcard */}
         <div className="lg:col-span-8">
-          <motion.div
-            ref={postcardRef}
-            key={`${paletteIdx}-${fontIdx}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className={`paper relative mx-auto aspect-[7/5] w-full max-w-3xl rounded-[2rem] p-10 ${flying ? "animate-fly-away" : ""}`}
-            style={{ background: palette.bg, color: palette.ink }}
-          >
-            <div className="flex items-start justify-between">
-              <div className="font-mono-ui text-[10px] uppercase tracking-[0.25em] opacity-70">
-                postal · coimbra
-              </div>
-              <div
-                className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
-                style={{ background: palette.accent, color: palette.ink }}
+          <div className="relative">
+            {/* Swipe hint arrows */}
+            <button
+              onClick={() => cycle(-1)}
+              aria-label="opção anterior"
+              className="absolute left-0 top-1/2 z-10 -translate-x-2 -translate-y-1/2 rounded-full border border-border bg-card/70 p-3 backdrop-blur transition hover:scale-110 hover:bg-card"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => cycle(1)}
+              aria-label="opção seguinte"
+              className="absolute right-0 top-1/2 z-10 translate-x-2 -translate-y-1/2 rounded-full border border-border bg-card/70 p-3 backdrop-blur transition hover:scale-110 hover:bg-card"
+            >
+              <ArrowRight className="h-5 w-5" />
+            </button>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                ref={postcardRef}
+                key={variantIdx}
+                initial={{ opacity: 0, x: swipeHint === "right" ? 60 : swipeHint === "left" ? -60 : 0 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: swipeHint === "right" ? -60 : 60 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                className={`paper relative mx-auto aspect-[7/5] w-full max-w-3xl rounded-[2rem] p-10 ${flying ? "animate-fly-away" : ""}`}
+                style={{ background: variant.bg, color: variant.ink }}
               >
-                pt'26
-              </div>
-            </div>
-
-            <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
-              <div className="col-span-12 md:col-span-8">
-                <p className={`${font.cls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
-                  <span style={{ color: palette.ink, opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
-                  <span style={{ background: `linear-gradient(180deg, transparent 55%, ${palette.accent} 55%)`, padding: "0 0.1em" }}>
-                    {memory}
-                  </span>
-                  <span style={{ color: palette.accent }}>.</span>
-                </p>
-              </div>
-              <div className="col-span-12 hidden md:col-span-4 md:block">
-                <div className="ticket-divide mb-3 h-px" />
-                <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
-                  remetente
+                <div className="flex items-start justify-between">
+                  <div className="font-mono-ui text-[10px] uppercase tracking-[0.25em] opacity-70">
+                    postal · coimbra · {emotion.label}
+                  </div>
+                  <div
+                    className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
+                    style={{ background: variant.accent, color: variant.ink }}
+                  >
+                    pt'26
+                  </div>
                 </div>
-                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{sender || "anónimo"}</p>
-                <div className="mt-4 font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
-                  destino
-                </div>
-                <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{destination || "quem ler depois de mim"}</p>
-              </div>
-            </div>
 
-            <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
-              <span>{palette.name}</span>
-              <span>{font.label}</span>
-            </div>
-          </motion.div>
+                <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
+                  <div className="col-span-12 md:col-span-8">
+                    <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
+                      <span style={{ opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
+                      <span style={{ background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`, padding: "0 0.1em" }}>
+                        {memory}
+                      </span>
+                      <span style={{ color: variant.accent }}>.</span>
+                    </p>
+                  </div>
+                  <div className="col-span-12 hidden md:col-span-4 md:block">
+                    <div className="ticket-divide mb-3 h-px" />
+                    <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
+                      remetente
+                    </div>
+                    <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{sender || "anónimo"}</p>
+                    <div className="mt-4 font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
+                      destino
+                    </div>
+                    <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{destination || "quem ler depois de mim"}</p>
+                  </div>
+                </div>
+
+                <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
+                  <span>{variant.name}</span>
+                  <span>{variant.fontLabel}</span>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Variant indicator dots */}
+          <div className="mt-6 flex items-center justify-center gap-2">
+            {variants.map((v, i) => (
+              <button
+                key={i}
+                onClick={() => setVariantIdx(i)}
+                className={`h-2.5 rounded-full transition-all ${i === variantIdx ? "w-8 bg-ink" : "w-2.5 bg-ink/25"}`}
+                aria-label={`opção ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Controls */}
         <div className="lg:col-span-4">
           <div className="rounded-3xl border border-border bg-card/60 p-6 backdrop-blur">
             <div className="mb-1 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              <Hand className="h-3.5 w-3.5" /> gestos simulados
+              <Sparkles className="h-3.5 w-3.5" /> emoção detetada
             </div>
-            <p className="mb-5 font-serif italic text-muted-foreground">
-              Usa as setas — ou desliza com a mão na versão completa.
+            <p className="mb-1 font-serif text-2xl text-ink">{emotion.label}</p>
+            <p className="mb-5 font-serif italic text-sm text-muted-foreground">
+              A tua frase foi lida e traduzida em três postais possíveis. Escolhe um deles.
             </p>
 
-            <div className="space-y-4">
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">paleta</span>
-                  <span className="font-mono-ui text-[10px] text-muted-foreground">
-                    {paletteIdx + 1}/{PALETTES.length}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setPaletteIdx((i) => (i - 1 + PALETTES.length) % PALETTES.length)}
-                    className="h-9 w-9 rounded-full"
-                    aria-label="paleta anterior"
-                  ><ArrowLeft className="h-4 w-4" /></Button>
-                  <div className="flex flex-1 items-center justify-center gap-1.5">
-                    {PALETTES.map((p, i) => (
-                      <button
-                        key={p.name}
-                        onClick={() => setPaletteIdx(i)}
-                        className={`h-6 w-6 rounded-full border transition ${i === paletteIdx ? "scale-110 border-ink" : "border-border opacity-70"}`}
-                        style={{ background: p.accent }}
-                        aria-label={p.name}
-                      />
-                    ))}
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setPaletteIdx((i) => (i + 1) % PALETTES.length)}
-                    className="h-9 w-9 rounded-full"
-                    aria-label="paleta seguinte"
-                  ><ArrowRight className="h-4 w-4" /></Button>
-                </div>
-                <p className="mt-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  → seta direita
-                </p>
-              </div>
+            <div className="ticket-divide mb-4 h-px" />
 
-              <div className="ticket-divide h-px" />
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
-                    <Type className="h-3 w-3" /> tipografia
-                  </span>
-                  <span className="font-mono-ui text-[10px] text-muted-foreground">
-                    {fontIdx + 1}/{FONTS.length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {FONTS.map((f, i) => (
-                    <button
-                      key={f.key}
-                      onClick={() => setFontIdx(i)}
-                      className={`rounded-xl border px-3 py-2 text-left text-sm transition ${i === fontIdx ? "border-ink bg-yellow/30" : "border-border hover:border-ink/40"} ${f.cls}`}
-                    >
-                      Aa
-                      <span className="ml-2 font-mono-ui text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {f.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  ← seta esquerda
-                </p>
+            <div className="mb-4">
+              <div className="mb-2 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
+                <Hand className="h-3.5 w-3.5" /> gesto · escolher
               </div>
+              <p className="font-mono-ui text-[11px] leading-relaxed text-muted-foreground">
+                Passa a mão para o lado do postal — esquerda ou direita — para cicl­ar entre as 3 opções geradas.
+                <br />
+                <span className="text-ink">← →</span> simulam o gesto.
+              </p>
+              <p className="mt-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                opção {variantIdx + 1} / {variants.length}
+              </p>
             </div>
 
             <div className="ticket-divide my-5 h-px" />
@@ -277,21 +240,11 @@ export const Editor = ({ memory, onSend }: Props) => {
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-2">
-              <Button
-                onClick={handleDownload}
-                disabled={flying}
-                variant="outline"
-                className="h-11 rounded-full border-ink/20 hover:border-ink"
-              >
+              <Button onClick={handleDownload} disabled={flying} variant="outline" className="h-11 rounded-full border-ink/20 hover:border-ink">
                 <Download className="mr-1.5 h-4 w-4" />
                 guardar png
               </Button>
-              <Button
-                onClick={handleEmail}
-                disabled={flying}
-                variant="outline"
-                className="h-11 rounded-full border-ink/20 hover:border-ink"
-              >
+              <Button onClick={handleEmail} disabled={flying} variant="outline" className="h-11 rounded-full border-ink/20 hover:border-ink">
                 <Mail className="mr-1.5 h-4 w-4" />
                 enviar email
               </Button>
