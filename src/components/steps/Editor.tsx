@@ -98,7 +98,7 @@ export const Editor = ({ memory, onSend }: Props) => {
   const handleEmail = () => {
     const subject = encodeURIComponent("um postal de Coimbra para ti");
     const body = encodeURIComponent(
-      `o que fica de Coimbra é ${memory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}`
+      `o que fica de Coimbra é ${cleanedMemory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
