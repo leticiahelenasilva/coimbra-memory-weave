@@ -1,13 +1,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Download, Hand, Mail, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Download, Hand, Mail, Send, Sparkles } from "lucide-react";
 import { toPng } from "html-to-image";
 import { Stamp } from "../Stamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
 import { detectEmotion, Variant } from "@/data/emotions";
+
+// Strip the trigger phrase if it leaked into the captured memory
+const cleanMemory = (raw: string) => {
+  let m = raw.trim();
+  const re = /^o que fica de coimbra\s*[ée]\s*/i;
+  while (re.test(m)) m = m.replace(re, "").trim();
+  return m;
+};
 
 interface Props {
   memory: string;
@@ -15,7 +24,8 @@ interface Props {
 }
 
 export const Editor = ({ memory, onSend }: Props) => {
-  const emotion = useMemo(() => detectEmotion(memory), [memory]);
+  const cleanedMemory = useMemo(() => cleanMemory(memory), [memory]);
+  const emotion = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
   const variants = emotion.variants;
 
   const [variantIdx, setVariantIdx] = useState(0);
@@ -55,6 +65,12 @@ export const Editor = ({ memory, onSend }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flying]);
 
+  // Hand swipe via webcam (mocked CV)
+  const { status: camStatus, motion: camMotion } = useHandSwipe({
+    enabled: !flying,
+    onSwipe: (dir) => cycle(dir === "right" ? 1 : -1),
+  });
+
   const handleSend = () => {
     setFlying(true);
     setTimeout(() => onSend(), 1500);
@@ -82,7 +98,7 @@ export const Editor = ({ memory, onSend }: Props) => {
   const handleEmail = () => {
     const subject = encodeURIComponent("um postal de Coimbra para ti");
     const body = encodeURIComponent(
-      `o que fica de Coimbra é ${memory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}`
+      `o que fica de Coimbra é ${cleanedMemory}.\n\n— ${sender || "anónimo"}\npara ${destination || "quem ler depois de mim"}`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
@@ -144,7 +160,7 @@ export const Editor = ({ memory, onSend }: Props) => {
                     <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
                       <span style={{ opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
                       <span style={{ background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`, padding: "0 0.1em" }}>
-                        {memory}
+                        {cleanedMemory}
                       </span>
                       <span style={{ color: variant.accent }}>.</span>
                     </p>
@@ -201,10 +217,27 @@ export const Editor = ({ memory, onSend }: Props) => {
                 <Hand className="h-3.5 w-3.5" /> gesto · escolher
               </div>
               <p className="font-mono-ui text-[11px] leading-relaxed text-muted-foreground">
-                Passa a mão para o lado do postal — esquerda ou direita — para cicl­ar entre as 3 opções geradas.
+                Passa a mão para o lado do postal — esquerda ou direita — para ciclar entre as 3 opções geradas.
                 <br />
                 <span className="text-ink">← →</span> simulam o gesto.
               </p>
+
+              <div className="mt-3 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.22em]">
+                <Camera className="h-3 w-3" />
+                {camStatus === "idle" && <span className="text-muted-foreground">a iniciar câmara…</span>}
+                {camStatus === "requesting" && <span className="text-muted-foreground">a pedir permissão…</span>}
+                {camStatus === "granted" && <span className="text-ink">câmara ativa</span>}
+                {camStatus === "denied" && <span className="text-destructive">sem câmara · usa ← →</span>}
+                {camStatus === "unsupported" && <span className="text-destructive">câmara indisponível</span>}
+              </div>
+
+              {camStatus === "granted" && (
+                <div className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-ink/10">
+                  <div className="h-full bg-ink/60 transition-all" style={{ width: `${Math.min(100, camMotion.left * 600)}%` }} />
+                  <div className="ml-auto h-full bg-ink/60 transition-all" style={{ width: `${Math.min(100, camMotion.right * 600)}%` }} />
+                </div>
+              )}
+
               <p className="mt-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                 opção {variantIdx + 1} / {variants.length}
               </p>
