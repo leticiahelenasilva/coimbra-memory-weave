@@ -160,7 +160,7 @@ export const Editor = ({ memory, onSend }: Props) => {
                     <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
                       <span style={{ opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
                       <span style={{ background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`, padding: "0 0.1em" }}>
-                        {memory}
+                        {cleanedMemory}
                       </span>
                       <span style={{ color: variant.accent }}>.</span>
                     </p>
