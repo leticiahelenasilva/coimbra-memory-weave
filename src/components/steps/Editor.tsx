@@ -24,7 +24,8 @@ interface Props {
 }
 
 export const Editor = ({ memory, onSend }: Props) => {
-  const emotion = useMemo(() => detectEmotion(memory), [memory]);
+  const cleanedMemory = useMemo(() => cleanMemory(memory), [memory]);
+  const emotion = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
   const variants = emotion.variants;
 
   const [variantIdx, setVariantIdx] = useState(0);
