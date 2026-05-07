@@ -1,13 +1,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Download, Hand, Mail, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Download, Hand, Mail, Send, Sparkles } from "lucide-react";
 import { toPng } from "html-to-image";
 import { Stamp } from "../Stamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
 import { detectEmotion, Variant } from "@/data/emotions";
+
+// Strip the trigger phrase if it leaked into the captured memory
+const cleanMemory = (raw: string) => {
+  let m = raw.trim();
+  const re = /^o que fica de coimbra\s*[ée]\s*/i;
+  while (re.test(m)) m = m.replace(re, "").trim();
+  return m;
+};
 
 interface Props {
   memory: string;
