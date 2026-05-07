@@ -217,10 +217,27 @@ export const Editor = ({ memory, onSend }: Props) => {
                 <Hand className="h-3.5 w-3.5" /> gesto · escolher
               </div>
               <p className="font-mono-ui text-[11px] leading-relaxed text-muted-foreground">
-                Passa a mão para o lado do postal — esquerda ou direita — para cicl­ar entre as 3 opções geradas.
+                Passa a mão para o lado do postal — esquerda ou direita — para ciclar entre as 3 opções geradas.
                 <br />
                 <span className="text-ink">← →</span> simulam o gesto.
               </p>
+
+              <div className="mt-3 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.22em]">
+                <Camera className="h-3 w-3" />
+                {camStatus === "idle" && <span className="text-muted-foreground">a iniciar câmara…</span>}
+                {camStatus === "requesting" && <span className="text-muted-foreground">a pedir permissão…</span>}
+                {camStatus === "granted" && <span className="text-ink">câmara ativa</span>}
+                {camStatus === "denied" && <span className="text-destructive">sem câmara · usa ← →</span>}
+                {camStatus === "unsupported" && <span className="text-destructive">câmara indisponível</span>}
+              </div>
+
+              {camStatus === "granted" && (
+                <div className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-ink/10">
+                  <div className="h-full bg-ink/60 transition-all" style={{ width: `${Math.min(100, camMotion.left * 600)}%` }} />
+                  <div className="ml-auto h-full bg-ink/60 transition-all" style={{ width: `${Math.min(100, camMotion.right * 600)}%` }} />
+                </div>
+              )}
+
               <p className="mt-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                 opção {variantIdx + 1} / {variants.length}
               </p>
