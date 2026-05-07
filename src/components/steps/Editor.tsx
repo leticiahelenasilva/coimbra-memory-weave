@@ -65,6 +65,12 @@ export const Editor = ({ memory, onSend }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flying]);
 
+  // Hand swipe via webcam (mocked CV)
+  const { status: camStatus, motion: camMotion } = useHandSwipe({
+    enabled: !flying,
+    onSwipe: (dir) => cycle(dir === "right" ? 1 : -1),
+  });
+
   const handleSend = () => {
     setFlying(true);
     setTimeout(() => onSend(), 1500);
