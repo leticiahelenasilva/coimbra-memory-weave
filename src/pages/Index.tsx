@@ -34,7 +34,10 @@ const Index = () => {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           {step === "onboarding" && (
-            <Onboarding onBegin={() => setStep("mural")} />
+            <Onboarding
+              onBegin={() => setStep("mural")}
+              onVoiceTrigger={() => setStep("recording")}
+            />
           )}
           {step === "mural" && (
             <MemoryMural
