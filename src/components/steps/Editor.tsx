@@ -37,11 +37,11 @@ export const Editor = ({ memory, onSend }: Props) => {
 
   const variant: Variant = variants[variantIdx];
 
-  // Voice command "enviar"
+  // Voice command "enviar para o mural"
   const { transcript, interim } = useSpeechRecognition({ enabled: !flying, lang: "pt-PT" });
   useEffect(() => {
     const all = (transcript + " " + interim).toLowerCase();
-    if (all.includes("enviar") && !flying) handleSend();
+    if ((all.includes("enviar para o mural") || all.includes("enviar pro mural")) && !flying) handleSend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, interim, flying]);
 
@@ -108,7 +108,7 @@ export const Editor = ({ memory, onSend }: Props) => {
       <div className="flex items-center justify-between">
         <Stamp>passo 04 · editor gestual</Stamp>
         <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          diz <span className="text-ink">"enviar"</span> para partir
+          diz <span className="text-ink">"enviar para o mural"</span> para partir · passa o rato no postal para virar
         </span>
       </div>
 
@@ -134,53 +134,85 @@ export const Editor = ({ memory, onSend }: Props) => {
 
             <AnimatePresence mode="wait">
               <motion.div
-                ref={postcardRef}
                 key={variantIdx}
                 initial={{ opacity: 0, x: swipeHint === "right" ? 60 : swipeHint === "left" ? -60 : 0 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: swipeHint === "right" ? -60 : 60 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className={`paper relative mx-auto aspect-[7/5] w-full max-w-3xl rounded-[2rem] p-10 ${flying ? "animate-fly-away" : ""}`}
-                style={{ background: variant.bg, color: variant.ink }}
+                className={`flip-card relative mx-auto aspect-[7/5] w-full max-w-3xl ${flying ? "animate-fly-away" : ""}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="font-mono-ui text-[10px] uppercase tracking-[0.25em] opacity-70">
-                    postal · coimbra · {emotion.label}
-                  </div>
+                <div className="flip-inner">
+                  {/* FRONT */}
                   <div
-                    className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
-                    style={{ background: variant.accent, color: variant.ink }}
+                    ref={postcardRef}
+                    className="flip-face paper rounded-[2rem] p-10"
+                    style={{ background: variant.bg, color: variant.ink }}
                   >
-                    pt'26
-                  </div>
-                </div>
-
-                <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
-                  <div className="col-span-12 md:col-span-8">
-                    <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
-                      <span style={{ opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
-                      <span style={{ background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`, padding: "0 0.1em" }}>
-                        {cleanedMemory}
-                      </span>
-                      <span style={{ color: variant.accent }}>.</span>
-                    </p>
-                  </div>
-                  <div className="col-span-12 hidden md:col-span-4 md:block">
-                    <div className="ticket-divide mb-3 h-px" />
-                    <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
-                      remetente
+                    <div className="flex items-start justify-between">
+                      <div className="font-mono-ui text-[10px] uppercase tracking-[0.25em] opacity-70">
+                        postal · coimbra · {emotion.label}
+                      </div>
+                      <div
+                        className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
+                        style={{ background: variant.accent, color: variant.ink }}
+                      >
+                        pt'26
+                      </div>
                     </div>
-                    <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{sender || "anónimo"}</p>
-                    <div className="mt-4 font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-70">
-                      destino
-                    </div>
-                    <p className="font-serif italic" style={{ fontSize: "1.1rem" }}>{destination || "quem ler depois de mim"}</p>
-                  </div>
-                </div>
 
-                <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
-                  <span>{variant.name}</span>
-                  <span>{variant.fontLabel}</span>
+                    <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
+                      <div className="col-span-12">
+                        <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
+                          <span style={{ opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
+                          <span style={{ background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`, padding: "0 0.1em" }}>
+                            {cleanedMemory}
+                          </span>
+                          <span style={{ color: variant.accent }}>.</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
+                      <span>{variant.name}</span>
+                      <span>{variant.fontLabel}</span>
+                    </div>
+                  </div>
+
+                  {/* BACK */}
+                  <div
+                    className="flip-face flip-back paper rounded-[2rem] p-10"
+                    style={{ background: "hsl(60 20% 97%)", color: "hsl(30 8% 12%)" }}
+                  >
+                    <div className="grid h-full grid-cols-2 gap-8">
+                      {/* left: handwritten note */}
+                      <div className="flex flex-col">
+                        <p className="font-serif italic" style={{ fontSize: "1.6rem", color: variant.accent }}>
+                          O que fica de Coimbra é…
+                        </p>
+                        <p className="mt-4 font-serif text-[0.95rem] leading-relaxed text-ink/80">
+                          {cleanedMemory}
+                        </p>
+                        <p className="mt-auto font-serif italic text-sm text-ink/60">— {sender || "anónimo"}</p>
+                      </div>
+                      {/* right: address + stamp */}
+                      <div className="relative flex flex-col">
+                        <div
+                          className="ml-auto h-16 w-12 rounded-sm border border-dashed"
+                          style={{ background: variant.accent, borderColor: "hsl(30 8% 12% / 0.2)" }}
+                        />
+                        <div className="mt-12 space-y-3">
+                          <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-50">para</div>
+                          <p className="border-b border-ink/30 pb-1 font-serif text-sm">{destination || "quem ler depois de mim"}</p>
+                          <p className="border-b border-ink/30 pb-1 font-serif text-sm">Coimbra · 3000</p>
+                          <p className="border-b border-ink/30 pb-1 font-serif text-sm">Portugal</p>
+                          <p className="border-b border-ink/30 pb-1 font-serif text-sm">&nbsp;</p>
+                        </div>
+                        <div className="mt-auto font-mono-ui text-[9px] uppercase tracking-[0.22em] opacity-50">
+                          memorial · {emotion.label}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </AnimatePresence>

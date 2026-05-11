@@ -164,4 +164,30 @@
     background-repeat: repeat-x;
     background-position: center;
   }
+
+  /* Postcard flip (hover front ↔ back) */
+  .flip-card { perspective: 1400px; }
+  .flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 700ms var(--transition-silk);
+    transform-style: preserve-3d;
+  }
+  .flip-card:hover .flip-inner,
+  .flip-card.is-flipped .flip-inner { transform: rotateY(180deg); }
+  .flip-face {
+    position: absolute;
+    inset: 0;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .flip-back { transform: rotateY(180deg); }
+
+  /* Horizontal marquee for typographic memories */
+  @keyframes marquee {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+  .animate-marquee { animation: marquee var(--marquee-dur, 60s) linear infinite; }
 }
