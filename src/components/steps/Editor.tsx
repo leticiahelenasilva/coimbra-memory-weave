@@ -37,11 +37,11 @@ export const Editor = ({ memory, onSend }: Props) => {
 
   const variant: Variant = variants[variantIdx];
 
-  // Voice command "enviar"
+  // Voice command "enviar para o mural"
   const { transcript, interim } = useSpeechRecognition({ enabled: !flying, lang: "pt-PT" });
   useEffect(() => {
     const all = (transcript + " " + interim).toLowerCase();
-    if (all.includes("enviar") && !flying) handleSend();
+    if ((all.includes("enviar para o mural") || all.includes("enviar pro mural")) && !flying) handleSend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, interim, flying]);
 
