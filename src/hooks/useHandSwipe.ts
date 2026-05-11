@@ -18,8 +18,8 @@ interface Options {
 export const useHandSwipe = ({
   enabled,
   onSwipe,
-  cooldownMs = 1200,
-  threshold = 0.06,
+  cooldownMs = 1400,
+  threshold = 0.09,
 }: Options) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -36,6 +36,9 @@ export const useHandSwipe = ({
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
+    // Smoothed running motion + brief trajectory tracking
+    const smoothed = { left: 0, right: 0 };
+    const recent: { t: number; cx: number }[] = []; // motion centroid over time
 
     const start = async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -85,11 +88,14 @@ export const useHandSwipe = ({
       if (prev) {
         const w = canvas.width;
         const h = canvas.height;
-        const half = Math.floor(w / 2);
+        const half = w / 2;
         let leftSum = 0;
         let rightSum = 0;
+        let cxSum = 0;
+        let cxCount = 0;
         const data = frame.data;
         const pdata = prev.data;
+        const DIFF_THRESHOLD = 70;
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
             const i = (y * w + x) * 4;
@@ -97,27 +103,43 @@ export const useHandSwipe = ({
               Math.abs(data[i] - pdata[i]) +
               Math.abs(data[i + 1] - pdata[i + 1]) +
               Math.abs(data[i + 2] - pdata[i + 2]);
-            if (d > 60) {
+            if (d > DIFF_THRESHOLD) {
               if (x < half) leftSum++;
               else rightSum++;
+              cxSum += x;
+              cxCount++;
             }
           }
         }
         const halfPixels = (w * h) / 2;
         const leftN = leftSum / halfPixels;
         const rightN = rightSum / halfPixels;
-        setMotion({ left: leftN, right: rightN });
 
+        // Exponential smoothing — removes flicker noise that biased one side
+        smoothed.left = smoothed.left * 0.6 + leftN * 0.4;
+        smoothed.right = smoothed.right * 0.6 + rightN * 0.4;
+        setMotion({ left: smoothed.left, right: smoothed.right });
+
+        // Trajectory: track motion centroid across the last ~500ms
         const now = performance.now();
-        if (now - lastFireRef.current > cooldownMs) {
-          const diff = leftN - rightN;
-          // mirrored camera → left motion = user's right hand
-          if (leftN > threshold && diff > threshold * 0.6) {
+        if (cxCount > 30) {
+          const cx = cxSum / cxCount / w; // 0..1
+          recent.push({ t: now, cx });
+        }
+        while (recent.length && now - recent[0].t > 500) recent.shift();
+
+        if (now - lastFireRef.current > cooldownMs && recent.length >= 4) {
+          const totalMotion = smoothed.left + smoothed.right;
+          const first = recent[0].cx;
+          const last = recent[recent.length - 1].cx;
+          const travel = last - first; // positive = motion moved rightward in mirrored frame
+
+          // Require: enough total motion + clear horizontal travel
+          if (totalMotion > threshold && Math.abs(travel) > 0.18) {
             lastFireRef.current = now;
-            onSwipeRef.current("right");
-          } else if (rightN > threshold && -diff > threshold * 0.6) {
-            lastFireRef.current = now;
-            onSwipeRef.current("left");
+            recent.length = 0;
+            // Mirrored: image-right travel = user's left hand → swipe "left"
+            onSwipeRef.current(travel > 0 ? "left" : "right");
           }
         }
       }
