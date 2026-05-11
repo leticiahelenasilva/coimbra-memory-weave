@@ -4,7 +4,8 @@ import { ArrowRight, ChevronDown, Mic } from "lucide-react";
 import { Fog } from "../Fog";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { SEED_MEMORIES } from "@/data/memories";
+import { EMOTION_SEEDS } from "@/data/memories";
+import { EMOTIONS } from "@/data/emotions";
 
 interface Props {
   onBegin: () => void;
@@ -20,20 +21,24 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
     lang: "pt-PT",
   });
 
-  // Detect trigger phrase → jump straight into recording
+  // Detect trigger phrase → stop SR and jump straight into recording
   useEffect(() => {
     if (!armed) return;
     const all = (transcript + " " + interim).toLowerCase();
     if (all.includes(TRIGGER)) {
+      setArmed(false);
       reset();
       onVoiceTrigger();
     }
   }, [armed, transcript, interim, reset, onVoiceTrigger]);
 
-  // Build a long, repeated typographic marquee line
+  // Build a long, repeated typographic marquee with emotion-driven styling
   const marqueeItems = useMemo(() => {
-    const fonts = ["font-serif-display italic", "font-mono-ui", "font-serif-display", "font-mono-ui uppercase tracking-wider"];
-    return SEED_MEMORIES.slice(0, 14).map((m, i) => ({ text: m, cls: fonts[i % fonts.length] }));
+    return EMOTION_SEEDS.map((s) => {
+      const e = EMOTIONS[s.emotion];
+      const v = e.variants[0];
+      return { text: s.text, fontCls: v.fontCls, ink: v.ink, accent: v.accent, label: e.label };
+    });
   }, []);
 
   const muralRef = useRef<HTMLDivElement>(null);
