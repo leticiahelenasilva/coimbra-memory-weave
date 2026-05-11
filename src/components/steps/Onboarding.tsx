@@ -43,7 +43,7 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
     <div className="relative min-h-screen w-full bg-background">
       {/* ============ TOP NAV ============ */}
       <header className="sticky top-0 z-40 flex items-center justify-center px-6 pt-6">
-        <nav className="flex items-center gap-1 rounded-full border border-border bg-card/85 px-2 py-1.5 shadow-soft backdrop-blur">
+        <nav className="flex items-center gap-1 rounded-full border border-border bg-card/85 px-2 py-1.5 shadow-md backdrop-blur">
           <button onClick={scrollToMural} className="rounded-full px-4 py-2 font-mono-ui text-[11px] uppercase tracking-[0.18em] text-ink/70 transition hover:text-ink">
             Mural de memórias
           </button>
@@ -52,7 +52,7 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
           </button>
           <button
             onClick={() => { if (!armed) { reset(); setArmed(true); } else { onVoiceTrigger(); } }}
-            className="ml-1 inline-flex items-center gap-2 rounded-full bg-yellow px-5 py-2 font-mono-ui text-[11px] uppercase tracking-[0.18em] text-ink shadow-soft transition hover:scale-[1.02]"
+            className="ml-1 inline-flex items-center gap-2 rounded-full bg-yellow px-5 py-2 font-mono-ui text-[11px] uppercase tracking-[0.18em] text-ink shadow-md transition hover:scale-[1.02]"
           >
             Fale o que fica de Coimbra
             <span className={`grid h-6 w-6 place-items-center rounded-full bg-ink/90 text-paper ${listening ? "animate-pulse" : ""}`}>
@@ -68,8 +68,8 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
         <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
           {/* stacked postcards illustration */}
           <div className="relative mx-auto mb-10 h-[260px] w-[420px] max-w-full">
-            <div className="absolute left-[58%] top-2 h-20 w-28 rotate-[14deg] rounded-md border border-border bg-card shadow-soft" />
-            <div className="absolute left-[68%] top-10 h-16 w-24 rotate-[8deg] rounded-md border border-border bg-card shadow-soft" />
+            <div className="absolute left-[58%] top-2 h-20 w-28 rotate-[14deg] rounded-md border border-border bg-card shadow-md" />
+            <div className="absolute left-[68%] top-10 h-16 w-24 rotate-[8deg] rounded-md border border-border bg-card shadow-md" />
             <motion.div
               initial={{ y: 18, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -136,7 +136,7 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
           <Button
             onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
             size="lg"
-            className="h-12 rounded-full bg-yellow px-7 text-ink shadow-soft hover:bg-yellow/90"
+            className="h-12 rounded-full bg-yellow px-7 text-ink shadow-md hover:bg-yellow/90"
           >
             Fale o que fica de Coimbra
             <Mic className="ml-2 h-4 w-4" />
