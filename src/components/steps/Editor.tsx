@@ -37,11 +37,13 @@ export const Editor = ({ memory, onSend }: Props) => {
 
   const variant: Variant = variants[variantIdx];
 
-  // Voice command "enviar para o mural"
-  const { transcript, interim } = useSpeechRecognition({ enabled: !flying, lang: "pt-PT" });
+  // Voice command: variants of "enviar para o mural"
+  const { transcript, interim, listening } = useSpeechRecognition({ enabled: !flying, lang: "pt-PT" });
   useEffect(() => {
     const all = (transcript + " " + interim).toLowerCase();
-    if ((all.includes("enviar para o mural") || all.includes("enviar pro mural")) && !flying) handleSend();
+    // accepts: enviar/envia/manda/mandar + (para|pro|p'ro) + (o)? + mural
+    const re = /(envi[ae]r?|mand[ae]r?)\s+(para|pra|pro|p'ro)\s+(o\s+)?mural/;
+    if (re.test(all) && !flying) handleSend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, interim, flying]);
 
