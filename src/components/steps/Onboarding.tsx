@@ -105,8 +105,15 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
           <div key={row} className="mb-6 flex w-full overflow-hidden last:mb-0" style={{ ['--marquee-dur' as string]: `${50 + row * 14}s` }}>
             <div className={`flex shrink-0 items-center gap-12 whitespace-nowrap px-6 ${row % 2 === 1 ? "" : "animate-marquee"}`} style={row % 2 === 1 ? { animation: `marquee ${64}s linear infinite reverse` } : undefined}>
               {[...marqueeItems, ...marqueeItems].map((m, i) => (
-                <span key={`${row}-${i}`} className={`${m.cls} text-[clamp(1.4rem,2.6vw,2.4rem)] text-ink/85`}>
-                  {m.text}
+                <span
+                  key={`${row}-${i}`}
+                  className={`${m.fontCls} text-[clamp(1.4rem,2.6vw,2.4rem)]`}
+                  style={{ color: m.ink }}
+                  title={m.label}
+                >
+                  <span style={{ background: `linear-gradient(180deg, transparent 60%, ${m.accent}55 60%)`, padding: "0 0.08em" }}>
+                    {m.text}
+                  </span>
                   <span className="mx-6 text-ink/30">/</span>
                 </span>
               ))}
