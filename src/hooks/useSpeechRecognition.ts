@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-// Web Speech API typings (browser-vendored)
 type SR = any;
 
 interface Options {
@@ -8,13 +7,21 @@ interface Options {
   enabled: boolean;
 }
 
+/**
+ * Wrapper around the Web Speech API. The recognizer instance is created once
+ * (per `lang`) and start/stop is driven by `enabled` — this avoids tearing it
+ * down on every toggle, which was wiping the transcript mid-stream.
+ */
 export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [supported, setSupported] = useState(true);
   const [listening, setListening] = useState(false);
   const recRef = useRef<SR | null>(null);
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
 
+  // Create the recognizer once per language
   useEffect(() => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -38,31 +45,38 @@ export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
       if (finalT) setTranscript((t) => (t + " " + finalT).trim());
       setInterim(interimT);
     };
+    rec.onstart = () => setListening(true);
     rec.onend = () => {
-      // Auto-restart while enabled
-      if (enabled) {
+      setListening(false);
+      // Auto-restart if still wanted
+      if (enabledRef.current) {
         try { rec.start(); } catch {}
-      } else {
-        setListening(false);
       }
     };
-    rec.onerror = () => {};
+    rec.onerror = (e: any) => {
+      // 'no-speech' and 'aborted' are noisy but recoverable
+      if (e?.error && e.error !== "no-speech" && e.error !== "aborted") {
+        console.warn("[SpeechRecognition] error:", e.error);
+      }
+    };
     recRef.current = rec;
 
     return () => {
-      try { rec.stop(); } catch {}
+      enabledRef.current = false;
+      try { rec.onend = null; rec.stop(); } catch {}
       recRef.current = null;
+      setListening(false);
     };
-  }, [lang, enabled]);
+  }, [lang]);
 
+  // Drive start/stop with `enabled`
   useEffect(() => {
     const rec = recRef.current;
     if (!rec) return;
     if (enabled) {
-      try { rec.start(); setListening(true); } catch {}
+      try { rec.start(); } catch {}
     } else {
       try { rec.stop(); } catch {}
-      setListening(false);
     }
   }, [enabled]);
 

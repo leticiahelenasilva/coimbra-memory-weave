@@ -4,7 +4,8 @@ import { ArrowRight, ChevronDown, Mic } from "lucide-react";
 import { Fog } from "../Fog";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { SEED_MEMORIES } from "@/data/memories";
+import { EMOTION_SEEDS } from "@/data/memories";
+import { EMOTIONS } from "@/data/emotions";
 
 interface Props {
   onBegin: () => void;
@@ -20,20 +21,24 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
     lang: "pt-PT",
   });
 
-  // Detect trigger phrase → jump straight into recording
+  // Detect trigger phrase → stop SR and jump straight into recording
   useEffect(() => {
     if (!armed) return;
     const all = (transcript + " " + interim).toLowerCase();
     if (all.includes(TRIGGER)) {
+      setArmed(false);
       reset();
       onVoiceTrigger();
     }
   }, [armed, transcript, interim, reset, onVoiceTrigger]);
 
-  // Build a long, repeated typographic marquee line
+  // Build a long, repeated typographic marquee with emotion-driven styling
   const marqueeItems = useMemo(() => {
-    const fonts = ["font-serif-display italic", "font-mono-ui", "font-serif-display", "font-mono-ui uppercase tracking-wider"];
-    return SEED_MEMORIES.slice(0, 14).map((m, i) => ({ text: m, cls: fonts[i % fonts.length] }));
+    return EMOTION_SEEDS.map((s) => {
+      const e = EMOTIONS[s.emotion];
+      const v = e.variants[0];
+      return { text: s.text, fontCls: v.fontCls, ink: v.ink, accent: v.accent, label: e.label };
+    });
   }, []);
 
   const muralRef = useRef<HTMLDivElement>(null);
@@ -100,8 +105,15 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
           <div key={row} className="mb-6 flex w-full overflow-hidden last:mb-0" style={{ ['--marquee-dur' as string]: `${50 + row * 14}s` }}>
             <div className={`flex shrink-0 items-center gap-12 whitespace-nowrap px-6 ${row % 2 === 1 ? "" : "animate-marquee"}`} style={row % 2 === 1 ? { animation: `marquee ${64}s linear infinite reverse` } : undefined}>
               {[...marqueeItems, ...marqueeItems].map((m, i) => (
-                <span key={`${row}-${i}`} className={`${m.cls} text-[clamp(1.4rem,2.6vw,2.4rem)] text-ink/85`}>
-                  {m.text}
+                <span
+                  key={`${row}-${i}`}
+                  className={`${m.fontCls} text-[clamp(1.4rem,2.6vw,2.4rem)]`}
+                  style={{ color: m.ink }}
+                  title={m.label}
+                >
+                  <span style={{ background: `linear-gradient(180deg, transparent 60%, ${m.accent}55 60%)`, padding: "0 0.08em" }}>
+                    {m.text}
+                  </span>
                   <span className="mx-6 text-ink/30">/</span>
                 </span>
               ))}
