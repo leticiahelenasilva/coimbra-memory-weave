@@ -50,25 +50,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
 
   const variant: Variant = variants[variantIdx];
 
-  // Semantic emotion detection via edge function (Lovable AI / Gemini)
-  useEffect(() => {
-    let cancelled = false;
-    const text = cleanedMemory.trim();
-    if (text.length < 3) return;
-    const t = window.setTimeout(async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("detect-emotion", { body: { text } });
-        if (cancelled || error || !data?.emotion) return;
-        if (data.emotion in EMOTIONS) {
-          setEmotionKey(data.emotion as EmotionKey);
-          setVariantIdx(0);
-        }
-      } catch (e) {
-        // silent fallback to heuristic
-      }
-    }, 600);
-    return () => { cancelled = true; window.clearTimeout(t); };
-  }, [cleanedMemory]);
+  // Emotion is locked from Analyzing step — no auto re-detection here.
 
 
   // Voice command: variants of "enviar para o mural"
