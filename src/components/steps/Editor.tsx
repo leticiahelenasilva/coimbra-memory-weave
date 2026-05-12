@@ -173,7 +173,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                       </div>
                       <div
                         className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
-                        style={{ background: variant.accent, color: variant.ink }}
+                        style={{ background: variant.accent, color: HIGHLIGHT_INK }}
                       >
                         pt'26
                       </div>
@@ -191,11 +191,13 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                             spellCheck={false}
                             className="rounded-sm outline-none focus:ring-2 focus:ring-offset-2"
                             style={{
-                              background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`,
-                              padding: "0 0.1em",
-                              color: variant.ink,
+                              background: variant.accent,
+                              padding: "0 0.15em",
+                              color: HIGHLIGHT_INK,
+                              boxDecorationBreak: "clone",
+                              WebkitBoxDecorationBreak: "clone",
                               minWidth: "1ch",
-                            }}
+                            } as React.CSSProperties}
                           >
                             {cleanedMemory}
                           </span>
