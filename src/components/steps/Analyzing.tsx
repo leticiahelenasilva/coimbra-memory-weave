@@ -15,8 +15,8 @@ const PHRASES = [
   "gerando postal",
 ];
 
-const MIN_DURATION_MS = 3500;
-const MAX_DURATION_MS = 8000;
+const MIN_DURATION_MS = 8000;
+const MAX_DURATION_MS = 12000;
 
 export const Analyzing = ({ memory, onDone }: Props) => {
   const [phraseIdx, setPhraseIdx] = useState(0);
