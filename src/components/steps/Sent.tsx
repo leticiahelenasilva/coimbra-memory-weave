@@ -82,8 +82,24 @@ export const Sent = ({ memory, extraMemories, emotion, onAgain, onHome }: Props)
             className="font-serif-display text-4xl leading-[1.05] text-ink md:text-6xl text-balance"
           >
             <span className="opacity-60">o que fica de Coimbra é</span>{" "}
-            <span className="highlight-yellow italic">{memory}</span>
-            <span className="text-lilac-deep">.</span>
+            <span
+              className="italic"
+              style={
+                accent
+                  ? {
+                      background: accent,
+                      color: "hsl(30 10% 12%)",
+                      padding: "0 0.15em",
+                      borderRadius: "0.15em",
+                      boxDecorationBreak: "clone",
+                      WebkitBoxDecorationBreak: "clone",
+                    }
+                  : undefined
+              }
+            >
+              {memory}
+            </span>
+            <span style={accent ? { color: accent } : undefined}>.</span>
           </motion.h2>
 
           <motion.p
