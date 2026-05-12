@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
-import { detectEmotion, Variant } from "@/data/emotions";
+import { detectEmotion, EMOTIONS, EmotionKey, Variant } from "@/data/emotions";
+import { supabase } from "@/integrations/supabase/client";
 
 // Strip the trigger phrase if it leaked into the captured memory
 const cleanMemory = (raw: string) => {
@@ -18,14 +19,21 @@ const cleanMemory = (raw: string) => {
   return m;
 };
 
+
 interface Props {
   memory: string;
   onSend: () => void;
 }
 
 export const Editor = ({ memory, onSend }: Props) => {
-  const cleanedMemory = useMemo(() => cleanMemory(memory), [memory]);
-  const emotion = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
+  const initialClean = useMemo(() => cleanMemory(memory), [memory]);
+  const [editedMemory, setEditedMemory] = useState(initialClean);
+  const cleanedMemory = editedMemory;
+
+  // Local heuristic emotion as instant fallback
+  const heuristic = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
+  const [emotionKey, setEmotionKey] = useState<EmotionKey>(heuristic.key);
+  const emotion = EMOTIONS[emotionKey];
   const variants = emotion.variants;
 
   const [variantIdx, setVariantIdx] = useState(0);
@@ -36,6 +44,27 @@ export const Editor = ({ memory, onSend }: Props) => {
   const postcardRef = useRef<HTMLDivElement>(null);
 
   const variant: Variant = variants[variantIdx];
+
+  // Semantic emotion detection via edge function (Lovable AI / Gemini)
+  useEffect(() => {
+    let cancelled = false;
+    const text = cleanedMemory.trim();
+    if (text.length < 3) return;
+    const t = window.setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("detect-emotion", { body: { text } });
+        if (cancelled || error || !data?.emotion) return;
+        if (data.emotion in EMOTIONS) {
+          setEmotionKey(data.emotion as EmotionKey);
+          setVariantIdx(0);
+        }
+      } catch (e) {
+        // silent fallback to heuristic
+      }
+    }, 600);
+    return () => { cancelled = true; window.clearTimeout(t); };
+  }, [cleanedMemory]);
+
 
   // Voice command: variants of "enviar para o mural"
   const { transcript, interim, listening } = useSpeechRecognition({ enabled: !flying, lang: "pt-PT" });
@@ -110,8 +139,9 @@ export const Editor = ({ memory, onSend }: Props) => {
       <div className="flex items-center justify-between">
         <Stamp>passo 04 · editor gestual</Stamp>
         <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          diz <span className="text-ink">"enviar para o mural"</span> para partir · passa o rato no postal para virar
+          clica no postal para editar · diz <span className="text-ink">"enviar para o mural"</span> para partir
         </span>
+
       </div>
 
       <div className="mx-auto mt-6 grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-12">
@@ -165,14 +195,31 @@ export const Editor = ({ memory, onSend }: Props) => {
                     <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
                       <div className="col-span-12">
                         <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
-                          <span style={{ opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
-                          <span style={{ background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`, padding: "0 0.1em" }}>
+                          <span style={{ opacity: 0.6 }}>o que fica de Coimbra é</span>{" "}
+                          <span
+                            contentEditable={!flying}
+                            suppressContentEditableWarning
+                            onBlur={(e) => setEditedMemory(e.currentTarget.textContent?.trim() || "")}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } }}
+                            spellCheck={false}
+                            className="rounded-sm outline-none focus:ring-2 focus:ring-offset-2"
+                            style={{
+                              background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`,
+                              padding: "0 0.1em",
+                              color: variant.ink,
+                              minWidth: "1ch",
+                            }}
+                          >
                             {cleanedMemory}
                           </span>
                           <span style={{ color: variant.accent }}>.</span>
                         </p>
+                        <p className="mt-3 font-mono-ui text-[10px] uppercase tracking-[0.2em]" style={{ opacity: 0.5 }}>
+                          ✎ clica no texto para editar
+                        </p>
                       </div>
                     </div>
+
 
                     <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
                       <span>{variant.name}</span>
@@ -191,10 +238,24 @@ export const Editor = ({ memory, onSend }: Props) => {
                         <p className="font-serif italic" style={{ fontSize: "1.6rem", color: variant.accent }}>
                           O que fica de Coimbra é…
                         </p>
-                        <p className="mt-4 font-serif text-[0.95rem] leading-relaxed text-ink/80">
+                        <p
+                          contentEditable={!flying}
+                          suppressContentEditableWarning
+                          onBlur={(e) => setEditedMemory(e.currentTarget.textContent?.trim() || "")}
+                          spellCheck={false}
+                          className="mt-4 rounded-sm font-serif text-[0.95rem] leading-relaxed text-ink/80 outline-none focus:ring-2"
+                        >
                           {cleanedMemory}
                         </p>
-                        <p className="mt-auto font-serif italic text-sm text-ink/60">— {sender || "anónimo"}</p>
+                        <p className="mt-auto font-serif italic text-sm text-ink/60">
+                          — <span
+                            contentEditable={!flying}
+                            suppressContentEditableWarning
+                            onBlur={(e) => setSender(e.currentTarget.textContent?.trim() || "anónimo")}
+                            spellCheck={false}
+                            className="rounded-sm outline-none focus:ring-2"
+                          >{sender || "anónimo"}</span>
+                        </p>
                       </div>
                       {/* right: address + stamp */}
                       <div className="relative flex flex-col">
@@ -204,7 +265,14 @@ export const Editor = ({ memory, onSend }: Props) => {
                         />
                         <div className="mt-12 space-y-3">
                           <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-50">para</div>
-                          <p className="border-b border-ink/30 pb-1 font-serif text-sm">{destination || "quem ler depois de mim"}</p>
+                          <p
+                            contentEditable={!flying}
+                            suppressContentEditableWarning
+                            onBlur={(e) => setDestination(e.currentTarget.textContent?.trim() || "quem ler depois de mim")}
+                            spellCheck={false}
+                            className="border-b border-ink/30 pb-1 font-serif text-sm outline-none focus:ring-2"
+                          >{destination || "quem ler depois de mim"}</p>
+
                           <p className="border-b border-ink/30 pb-1 font-serif text-sm">Coimbra · 3000</p>
                           <p className="border-b border-ink/30 pb-1 font-serif text-sm">Portugal</p>
                           <p className="border-b border-ink/30 pb-1 font-serif text-sm">&nbsp;</p>
