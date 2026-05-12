@@ -97,11 +97,9 @@ export const Recording = ({ onComplete }: Props) => {
               }}
             >
               <span className="italic text-ink/70">O que fica de Coimbra é…</span>{" "}
-              {spoken ? (
-                <span>{spoken}</span>
-              ) : (
-                <span className="italic text-muted-foreground/70">fala agora</span>
-              )}
+              {spoken && <span>{spoken}</span>}
+              <span className="ml-1 inline-block w-[2px] animate-pulse bg-ink/60" style={{ height: "0.9em", verticalAlign: "-0.1em" }} />
+
             </p>
           </div>
 

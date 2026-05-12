@@ -8,9 +8,8 @@ interface Options {
 }
 
 /**
- * Wrapper around the Web Speech API. The recognizer instance is created once
- * (per `lang`) and start/stop is driven by `enabled` — this avoids tearing it
- * down on every toggle, which was wiping the transcript mid-stream.
+ * Speech Recognition wrapper. Optimized for low-latency interim results and
+ * resilient auto-restart on `no-speech` / `aborted` / `network`.
  */
 export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
   const [transcript, setTranscript] = useState("");
@@ -19,9 +18,9 @@ export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
   const [listening, setListening] = useState(false);
   const recRef = useRef<SR | null>(null);
   const enabledRef = useRef(enabled);
+  const restartTimerRef = useRef<number | null>(null);
   enabledRef.current = enabled;
 
-  // Create the recognizer once per language
   useEffect(() => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -33,6 +32,7 @@ export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
     rec.lang = lang;
     rec.continuous = true;
     rec.interimResults = true;
+    rec.maxAlternatives = 1;
 
     rec.onresult = (event: any) => {
       let finalT = "";
@@ -42,34 +42,42 @@ export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
         if (res.isFinal) finalT += res[0].transcript;
         else interimT += res[0].transcript;
       }
-      if (finalT) setTranscript((t) => (t + " " + finalT).trim());
-      setInterim(interimT);
+      // Update synchronously — React batches but interim flushes on next paint
+      if (finalT) {
+        setTranscript((t) => (t + " " + finalT).trim());
+        setInterim("");
+      } else {
+        setInterim(interimT);
+      }
     };
     rec.onstart = () => setListening(true);
     rec.onend = () => {
       setListening(false);
-      // Auto-restart if still wanted
       if (enabledRef.current) {
-        try { rec.start(); } catch {}
+        if (restartTimerRef.current) window.clearTimeout(restartTimerRef.current);
+        restartTimerRef.current = window.setTimeout(() => {
+          try { rec.start(); } catch {}
+        }, 120);
       }
     };
     rec.onerror = (e: any) => {
-      // 'no-speech' and 'aborted' are noisy but recoverable
-      if (e?.error && e.error !== "no-speech" && e.error !== "aborted") {
-        console.warn("[SpeechRecognition] error:", e.error);
+      const err = e?.error;
+      if (err && err !== "no-speech" && err !== "aborted") {
+        console.warn("[SpeechRecognition] error:", err);
       }
+      // for network/audio-capture errors, allow onend to retry
     };
     recRef.current = rec;
 
     return () => {
       enabledRef.current = false;
+      if (restartTimerRef.current) window.clearTimeout(restartTimerRef.current);
       try { rec.onend = null; rec.stop(); } catch {}
       recRef.current = null;
       setListening(false);
     };
   }, [lang]);
 
-  // Drive start/stop with `enabled`
   useEffect(() => {
     const rec = recRef.current;
     if (!rec) return;
