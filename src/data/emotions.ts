@@ -45,11 +45,12 @@ export const EMOTIONS: Record<EmotionKey, EmotionProfile> = {
     key: "gratidao", label: "gratidão",
     keywords: ["gratid","obrigad","graça","graca","abençoad","abençoa","presente","dádiva","dadiva"],
     variants: [
-      { name: "água · script", bg: PAPER, ink: "hsl(175 55% 35%)", accent: "hsl(175 60% 60%)", fontCls: "font-serif italic", fontLabel: "script · água" },
-      { name: "água · pastel", bg: "hsl(175 50% 92%)", ink: "hsl(175 60% 25%)", accent: "hsl(175 70% 55%)", fontCls: "font-serif italic", fontLabel: "itálico · pastel" },
-      { name: "noite · água", bg: NIGHT, ink: "hsl(175 70% 75%)", accent: "hsl(175 80% 60%)", fontCls: "font-serif italic", fontLabel: "script · noite" },
+      { name: "água · script", bg: PAPER, ink: "hsl(175 65% 22%)", accent: "hsl(175 65% 50%)", fontCls: "font-serif italic", fontLabel: "script · água" },
+      { name: "água · pastel", bg: "hsl(175 50% 92%)", ink: "hsl(175 70% 18%)", accent: "hsl(175 75% 45%)", fontCls: "font-serif italic", fontLabel: "itálico · pastel" },
+      { name: "noite · água", bg: NIGHT, ink: "hsl(175 75% 78%)", accent: "hsl(175 80% 65%)", fontCls: "font-serif italic", fontLabel: "script · noite" },
     ],
   },
+
   serenidade: {
     key: "serenidade", label: "serenidade",
     keywords: ["seren","calm","paz","tranquil","silênc","silenc","sosseg","quietude","manhã","manha"],
@@ -90,20 +91,21 @@ export const EMOTIONS: Record<EmotionKey, EmotionProfile> = {
     key: "medo", label: "medo",
     keywords: ["medo","assustad","assust","terror","sombra","sombri","escur","fantasma","sereia"],
     variants: [
-      { name: "lilás · pixel", bg: PAPER, ink: "hsl(270 50% 50%)", accent: "hsl(270 60% 75%)", fontCls: "font-mono", fontLabel: "pixel · lilás" },
-      { name: "lilás · papel", bg: "hsl(270 45% 93%)", ink: "hsl(270 50% 30%)", accent: "hsl(270 60% 60%)", fontCls: "font-mono", fontLabel: "pixel · pastel" },
-      { name: "noite · lilás", bg: NIGHT, ink: "hsl(270 70% 78%)", accent: "hsl(270 75% 65%)", fontCls: "font-mono", fontLabel: "pixel · noite" },
+      { name: "lilás · pixel", bg: PAPER, ink: "hsl(270 60% 35%)", accent: "hsl(270 65% 55%)", fontCls: "font-mono", fontLabel: "pixel · lilás" },
+      { name: "lilás · papel", bg: "hsl(270 45% 93%)", ink: "hsl(270 60% 22%)", accent: "hsl(270 65% 50%)", fontCls: "font-mono", fontLabel: "pixel · pastel" },
+      { name: "noite · lilás", bg: NIGHT, ink: "hsl(270 75% 82%)", accent: "hsl(270 80% 70%)", fontCls: "font-mono", fontLabel: "pixel · noite" },
     ],
   },
   frustracao: {
     key: "frustracao", label: "frustração",
     keywords: ["frustr","cansad","farta","farto","chato","chata","desisto","desist","aborrec"],
     variants: [
-      { name: "laranja · sans", bg: PAPER, ink: "hsl(22 90% 50%)", accent: "hsl(22 95% 60%)", fontCls: "font-sans font-bold", fontLabel: "sans bold · laranja" },
-      { name: "laranja · papel", bg: "hsl(22 80% 94%)", ink: "hsl(22 80% 35%)", accent: "hsl(22 95% 55%)", fontCls: "font-sans font-bold", fontLabel: "sans · pastel" },
-      { name: "noite · laranja", bg: NIGHT, ink: "hsl(22 95% 65%)", accent: "hsl(22 95% 60%)", fontCls: "font-sans font-bold", fontLabel: "sans · noite" },
+      { name: "laranja · sans", bg: PAPER, ink: "hsl(22 95% 38%)", accent: "hsl(22 95% 55%)", fontCls: "font-sans font-bold", fontLabel: "sans bold · laranja" },
+      { name: "laranja · papel", bg: "hsl(22 80% 94%)", ink: "hsl(22 90% 28%)", accent: "hsl(22 95% 50%)", fontCls: "font-sans font-bold", fontLabel: "sans · pastel" },
+      { name: "noite · laranja", bg: NIGHT, ink: "hsl(22 95% 70%)", accent: "hsl(22 95% 60%)", fontCls: "font-sans font-bold", fontLabel: "sans · noite" },
     ],
   },
+
   saudade: {
     key: "saudade", label: "saudade",
     keywords: ["saudade","saudad","fica de coimbra","memória","memoria","lembr","passado","ficou","resta"],
@@ -117,11 +119,12 @@ export const EMOTIONS: Record<EmotionKey, EmotionProfile> = {
     key: "nostalgia", label: "nostalgia",
     keywords: ["nostalg","antigament","quando era","outrora","velhos tempos","infânc","infanc","jardim da sereia"],
     variants: [
-      { name: "rosa · script", bg: PAPER, ink: "hsl(340 35% 45%)", accent: "hsl(340 60% 80%)", fontCls: "font-serif italic", fontLabel: "script · rosa" },
-      { name: "rosa · papel", bg: "hsl(340 50% 95%)", ink: "hsl(340 40% 35%)", accent: "hsl(340 70% 70%)", fontCls: "font-serif italic", fontLabel: "itálico · pastel" },
-      { name: "noite · rosa", bg: NIGHT, ink: "hsl(340 60% 80%)", accent: "hsl(340 75% 70%)", fontCls: "font-serif italic", fontLabel: "script · noite" },
+      { name: "rosa · script", bg: PAPER, ink: "hsl(340 50% 32%)", accent: "hsl(340 65% 65%)", fontCls: "font-serif italic", fontLabel: "script · rosa" },
+      { name: "rosa · papel", bg: "hsl(340 50% 95%)", ink: "hsl(340 55% 28%)", accent: "hsl(340 70% 60%)", fontCls: "font-serif italic", fontLabel: "itálico · pastel" },
+      { name: "noite · rosa", bg: NIGHT, ink: "hsl(340 65% 82%)", accent: "hsl(340 75% 70%)", fontCls: "font-serif italic", fontLabel: "script · noite" },
     ],
   },
+
 };
 
 export const EMOTION_ORDER: EmotionKey[] = [
