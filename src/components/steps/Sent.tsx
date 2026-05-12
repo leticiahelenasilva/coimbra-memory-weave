@@ -35,7 +35,7 @@ export const Sent = ({ memory, extraMemories, emotion, onAgain, onHome }: Props)
 
       {/* Top */}
       <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between p-6">
-        <Stamp>enviado · obrigado</Stamp>
+        <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">enviado · obrigado</span>
         <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           mural · {all.length + 1} memórias
         </span>
