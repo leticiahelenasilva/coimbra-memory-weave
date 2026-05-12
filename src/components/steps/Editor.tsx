@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
-import { detectEmotion, Variant } from "@/data/emotions";
+import { detectEmotion, EMOTIONS, EmotionKey, Variant } from "@/data/emotions";
+import { supabase } from "@/integrations/supabase/client";
 
 // Strip the trigger phrase if it leaked into the captured memory
 const cleanMemory = (raw: string) => {
@@ -18,14 +19,21 @@ const cleanMemory = (raw: string) => {
   return m;
 };
 
+
 interface Props {
   memory: string;
   onSend: () => void;
 }
 
 export const Editor = ({ memory, onSend }: Props) => {
-  const cleanedMemory = useMemo(() => cleanMemory(memory), [memory]);
-  const emotion = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
+  const initialClean = useMemo(() => cleanMemory(memory), [memory]);
+  const [editedMemory, setEditedMemory] = useState(initialClean);
+  const cleanedMemory = editedMemory;
+
+  // Local heuristic emotion as instant fallback
+  const heuristic = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
+  const [emotionKey, setEmotionKey] = useState<EmotionKey>(heuristic.key);
+  const emotion = EMOTIONS[emotionKey];
   const variants = emotion.variants;
 
   const [variantIdx, setVariantIdx] = useState(0);
@@ -36,6 +44,27 @@ export const Editor = ({ memory, onSend }: Props) => {
   const postcardRef = useRef<HTMLDivElement>(null);
 
   const variant: Variant = variants[variantIdx];
+
+  // Semantic emotion detection via edge function (Lovable AI / Gemini)
+  useEffect(() => {
+    let cancelled = false;
+    const text = cleanedMemory.trim();
+    if (text.length < 3) return;
+    const t = window.setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("detect-emotion", { body: { text } });
+        if (cancelled || error || !data?.emotion) return;
+        if (data.emotion in EMOTIONS) {
+          setEmotionKey(data.emotion as EmotionKey);
+          setVariantIdx(0);
+        }
+      } catch (e) {
+        // silent fallback to heuristic
+      }
+    }, 600);
+    return () => { cancelled = true; window.clearTimeout(t); };
+  }, [cleanedMemory]);
+
 
   // Voice command: variants of "enviar para o mural"
   const { transcript, interim, listening } = useSpeechRecognition({ enabled: !flying, lang: "pt-PT" });
