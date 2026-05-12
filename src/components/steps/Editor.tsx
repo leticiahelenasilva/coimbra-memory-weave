@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Camera, Download, Hand, Mail, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download, Mail, Send } from "lucide-react";
 import { toPng } from "html-to-image";
-import { Stamp } from "../Stamp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
