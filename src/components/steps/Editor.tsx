@@ -292,6 +292,19 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
         {/* Controls */}
         <div className="lg:col-span-4">
           <div className="rounded-3xl border border-border bg-card/60 p-6 backdrop-blur">
+            <div className="mb-5 flex items-center justify-between border-b border-border pb-4">
+              <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                sentimento
+              </span>
+              <span className="flex items-center gap-2 font-serif italic text-ink">
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ background: variant.accent }}
+                  aria-hidden
+                />
+                {emotion.label}
+              </span>
+            </div>
 
             <div className="space-y-3">
               <div>
