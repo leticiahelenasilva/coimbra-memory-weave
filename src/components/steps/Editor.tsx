@@ -9,7 +9,7 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
 import { detectEmotion, EMOTIONS, EmotionKey, Variant } from "@/data/emotions";
-import { supabase } from "@/integrations/supabase/client";
+
 
 // Strip the trigger phrase if it leaked into the captured memory
 const cleanMemory = (raw: string) => {
@@ -23,16 +23,21 @@ const cleanMemory = (raw: string) => {
 interface Props {
   memory: string;
   onSend: () => void;
+  initialEmotion?: EmotionKey;
 }
 
-export const Editor = ({ memory, onSend }: Props) => {
+// High-contrast text color for the accent-colored highlight block (WCAG AA).
+// All accents in EMOTIONS are bright (lightness 45-80%), so dark NIGHT works universally.
+const HIGHLIGHT_INK = "hsl(30 10% 12%)";
+
+export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   const initialClean = useMemo(() => cleanMemory(memory), [memory]);
   const [editedMemory, setEditedMemory] = useState(initialClean);
   const cleanedMemory = editedMemory;
 
-  // Local heuristic emotion as instant fallback
-  const heuristic = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
-  const [emotionKey, setEmotionKey] = useState<EmotionKey>(heuristic.key);
+  // Emotion is locked once detected (passed in from Analyzing step). Fallback to heuristic.
+  const heuristic = useMemo(() => detectEmotion(initialClean), [initialClean]);
+  const [emotionKey] = useState<EmotionKey>(initialEmotion ?? heuristic.key);
   const emotion = EMOTIONS[emotionKey];
   const variants = emotion.variants;
 
@@ -45,25 +50,7 @@ export const Editor = ({ memory, onSend }: Props) => {
 
   const variant: Variant = variants[variantIdx];
 
-  // Semantic emotion detection via edge function (Lovable AI / Gemini)
-  useEffect(() => {
-    let cancelled = false;
-    const text = cleanedMemory.trim();
-    if (text.length < 3) return;
-    const t = window.setTimeout(async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("detect-emotion", { body: { text } });
-        if (cancelled || error || !data?.emotion) return;
-        if (data.emotion in EMOTIONS) {
-          setEmotionKey(data.emotion as EmotionKey);
-          setVariantIdx(0);
-        }
-      } catch (e) {
-        // silent fallback to heuristic
-      }
-    }, 600);
-    return () => { cancelled = true; window.clearTimeout(t); };
-  }, [cleanedMemory]);
+  // Emotion is locked from Analyzing step — no auto re-detection here.
 
 
   // Voice command: variants of "enviar para o mural"
@@ -186,7 +173,7 @@ export const Editor = ({ memory, onSend }: Props) => {
                       </div>
                       <div
                         className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
-                        style={{ background: variant.accent, color: variant.ink }}
+                        style={{ background: variant.accent, color: HIGHLIGHT_INK }}
                       >
                         pt'26
                       </div>
@@ -204,11 +191,13 @@ export const Editor = ({ memory, onSend }: Props) => {
                             spellCheck={false}
                             className="rounded-sm outline-none focus:ring-2 focus:ring-offset-2"
                             style={{
-                              background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`,
-                              padding: "0 0.1em",
-                              color: variant.ink,
+                              background: variant.accent,
+                              padding: "0 0.15em",
+                              color: HIGHLIGHT_INK,
+                              boxDecorationBreak: "clone",
+                              WebkitBoxDecorationBreak: "clone",
                               minWidth: "1ch",
-                            }}
+                            } as React.CSSProperties}
                           >
                             {cleanedMemory}
                           </span>
