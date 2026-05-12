@@ -194,14 +194,31 @@ export const Editor = ({ memory, onSend }: Props) => {
                     <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
                       <div className="col-span-12">
                         <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
-                          <span style={{ opacity: 0.55 }}>o que fica de Coimbra é</span>{" "}
-                          <span style={{ background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`, padding: "0 0.1em" }}>
+                          <span style={{ opacity: 0.6 }}>o que fica de Coimbra é</span>{" "}
+                          <span
+                            contentEditable={!flying}
+                            suppressContentEditableWarning
+                            onBlur={(e) => setEditedMemory(e.currentTarget.textContent?.trim() || "")}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } }}
+                            spellCheck={false}
+                            className="rounded-sm outline-none focus:ring-2 focus:ring-offset-2"
+                            style={{
+                              background: `linear-gradient(180deg, transparent 55%, ${variant.accent} 55%)`,
+                              padding: "0 0.1em",
+                              color: variant.ink,
+                              minWidth: "1ch",
+                            }}
+                          >
                             {cleanedMemory}
                           </span>
                           <span style={{ color: variant.accent }}>.</span>
                         </p>
+                        <p className="mt-3 font-mono-ui text-[10px] uppercase tracking-[0.2em]" style={{ opacity: 0.5 }}>
+                          ✎ clica no texto para editar
+                        </p>
                       </div>
                     </div>
+
 
                     <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
                       <span>{variant.name}</span>
@@ -220,10 +237,24 @@ export const Editor = ({ memory, onSend }: Props) => {
                         <p className="font-serif italic" style={{ fontSize: "1.6rem", color: variant.accent }}>
                           O que fica de Coimbra é…
                         </p>
-                        <p className="mt-4 font-serif text-[0.95rem] leading-relaxed text-ink/80">
+                        <p
+                          contentEditable={!flying}
+                          suppressContentEditableWarning
+                          onBlur={(e) => setEditedMemory(e.currentTarget.textContent?.trim() || "")}
+                          spellCheck={false}
+                          className="mt-4 rounded-sm font-serif text-[0.95rem] leading-relaxed text-ink/80 outline-none focus:ring-2"
+                        >
                           {cleanedMemory}
                         </p>
-                        <p className="mt-auto font-serif italic text-sm text-ink/60">— {sender || "anónimo"}</p>
+                        <p className="mt-auto font-serif italic text-sm text-ink/60">
+                          — <span
+                            contentEditable={!flying}
+                            suppressContentEditableWarning
+                            onBlur={(e) => setSender(e.currentTarget.textContent?.trim() || "anónimo")}
+                            spellCheck={false}
+                            className="rounded-sm outline-none focus:ring-2"
+                          >{sender || "anónimo"}</span>
+                        </p>
                       </div>
                       {/* right: address + stamp */}
                       <div className="relative flex flex-col">
@@ -233,7 +264,14 @@ export const Editor = ({ memory, onSend }: Props) => {
                         />
                         <div className="mt-12 space-y-3">
                           <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] opacity-50">para</div>
-                          <p className="border-b border-ink/30 pb-1 font-serif text-sm">{destination || "quem ler depois de mim"}</p>
+                          <p
+                            contentEditable={!flying}
+                            suppressContentEditableWarning
+                            onBlur={(e) => setDestination(e.currentTarget.textContent?.trim() || "quem ler depois de mim")}
+                            spellCheck={false}
+                            className="border-b border-ink/30 pb-1 font-serif text-sm outline-none focus:ring-2"
+                          >{destination || "quem ler depois de mim"}</p>
+
                           <p className="border-b border-ink/30 pb-1 font-serif text-sm">Coimbra · 3000</p>
                           <p className="border-b border-ink/30 pb-1 font-serif text-sm">Portugal</p>
                           <p className="border-b border-ink/30 pb-1 font-serif text-sm">&nbsp;</p>
