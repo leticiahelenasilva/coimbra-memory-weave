@@ -23,16 +23,21 @@ const cleanMemory = (raw: string) => {
 interface Props {
   memory: string;
   onSend: () => void;
+  initialEmotion?: EmotionKey;
 }
 
-export const Editor = ({ memory, onSend }: Props) => {
+// High-contrast text color for the accent-colored highlight block (WCAG AA).
+// All accents in EMOTIONS are bright (lightness 45-80%), so dark NIGHT works universally.
+const HIGHLIGHT_INK = "hsl(30 10% 12%)";
+
+export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   const initialClean = useMemo(() => cleanMemory(memory), [memory]);
   const [editedMemory, setEditedMemory] = useState(initialClean);
   const cleanedMemory = editedMemory;
 
-  // Local heuristic emotion as instant fallback
-  const heuristic = useMemo(() => detectEmotion(cleanedMemory), [cleanedMemory]);
-  const [emotionKey, setEmotionKey] = useState<EmotionKey>(heuristic.key);
+  // Emotion is locked once detected (passed in from Analyzing step). Fallback to heuristic.
+  const heuristic = useMemo(() => detectEmotion(initialClean), [initialClean]);
+  const [emotionKey] = useState<EmotionKey>(initialEmotion ?? heuristic.key);
   const emotion = EMOTIONS[emotionKey];
   const variants = emotion.variants;
 
