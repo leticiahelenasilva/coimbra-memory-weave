@@ -83,7 +83,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   }, [flying]);
 
   // Hand swipe via webcam (mocked CV)
-  const { status: camStatus, motion: camMotion } = useHandSwipe({
+  useHandSwipe({
     enabled: !flying,
     onSwipe: (dir) => cycle(dir === "right" ? 1 : -1),
   });
