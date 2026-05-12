@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Stamp } from "../Stamp";
 import { Fog } from "../Fog";
 import { SEED_MEMORIES } from "@/data/memories";
+import { EMOTIONS, EmotionKey } from "@/data/emotions";
 import { Home, RotateCcw } from "lucide-react";
 
 interface Props {
   memory: string;
   extraMemories: string[];
+  emotion?: EmotionKey;
   onAgain: () => void;
   onHome: () => void;
 }
