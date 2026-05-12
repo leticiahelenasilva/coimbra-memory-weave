@@ -139,8 +139,9 @@ export const Editor = ({ memory, onSend }: Props) => {
       <div className="flex items-center justify-between">
         <Stamp>passo 04 · editor gestual</Stamp>
         <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          diz <span className="text-ink">"enviar para o mural"</span> para partir · passa o rato no postal para virar
+          clica no postal para editar · diz <span className="text-ink">"enviar para o mural"</span> para partir
         </span>
+
       </div>
 
       <div className="mx-auto mt-6 grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-12">
