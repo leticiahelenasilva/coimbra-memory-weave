@@ -25,7 +25,8 @@ const positionFor = (i: number) => {
   };
 };
 
-export const Sent = ({ memory, extraMemories, onAgain, onHome }: Props) => {
+export const Sent = ({ memory, extraMemories, emotion, onAgain, onHome }: Props) => {
+  const accent = emotion ? EMOTIONS[emotion].variants[0].accent : undefined;
   const all = [...SEED_MEMORIES, ...extraMemories.filter((m) => m !== memory)];
 
   return (
