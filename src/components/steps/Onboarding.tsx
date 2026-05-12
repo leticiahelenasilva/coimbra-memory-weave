@@ -15,11 +15,25 @@ interface Props {
 const TRIGGER = "o que fica de coimbra";
 
 export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
-  const [armed, setArmed] = useState(false);
+  // Mic auto-enabled on mount; user can still see status indicator in header.
+  const [armed, setArmed] = useState(true);
+  const [micDenied, setMicDenied] = useState(false);
   const { transcript, interim, supported, listening, reset } = useSpeechRecognition({
     enabled: armed,
     lang: "pt-PT",
   });
+
+  // Proactively prompt for mic permission on mount so SR can start without UI gesture
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then((stream) => {
+        // Release immediately — Web Speech API will reopen its own stream
+        stream.getTracks().forEach((t) => t.stop());
+        setMicDenied(false);
+      })
+      .catch(() => setMicDenied(true));
+  }, []);
 
   // Detect trigger phrase → stop SR and jump straight into recording
   useEffect(() => {
@@ -31,6 +45,7 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
       onVoiceTrigger();
     }
   }, [armed, transcript, interim, reset, onVoiceTrigger]);
+
 
   // Build a long, repeated typographic marquee with emotion-driven styling
   const marqueeItems = useMemo(() => {
@@ -56,14 +71,16 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
             Postais
           </button>
           <button
-            onClick={() => { if (!armed) { reset(); setArmed(true); } else { onVoiceTrigger(); } }}
+            onClick={() => { reset(); setArmed(true); }}
             className="ml-1 inline-flex items-center gap-2 rounded-full bg-yellow px-5 py-2 font-mono-ui text-[11px] uppercase tracking-[0.18em] text-ink shadow-md transition hover:scale-[1.02]"
+            title={listening ? "à escuta" : "ativar microfone"}
           >
-            Fale o que fica de Coimbra
+            {listening ? "à escuta…" : "Fale o que fica de Coimbra"}
             <span className={`grid h-6 w-6 place-items-center rounded-full bg-ink/90 text-paper ${listening ? "animate-pulse" : ""}`}>
               <Mic className="h-3 w-3" />
             </span>
           </button>
+
         </nav>
       </header>
 
@@ -171,19 +188,22 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
           </p>
           <div className="mt-4 flex items-center gap-3 font-mono-ui text-[10px] uppercase tracking-[0.22em]">
             <span className={`h-2 w-2 rounded-full ${listening ? "animate-pulse bg-destructive" : "bg-muted-foreground/40"}`} />
-            {!armed && <span className="text-muted-foreground">microfone parado · ativa para começar pela voz</span>}
-            {armed && listening && <span className="text-ink">à escuta…</span>}
-            {armed && !listening && supported && <span className="text-muted-foreground">a iniciar microfone…</span>}
+            {micDenied && <span className="text-destructive">microfone bloqueado · permite o acesso no navegador</span>}
+            {!micDenied && armed && listening && <span className="text-ink">à escuta… diz "o que fica de Coimbra"</span>}
+            {!micDenied && armed && !listening && supported && <span className="text-muted-foreground">a iniciar microfone…</span>}
             {!supported && <span className="text-destructive">reconhecimento de voz indisponível</span>}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button onClick={() => { reset(); setArmed(true); }} disabled={armed} className="h-11 rounded-full bg-ink text-paper hover:bg-ink/90">
-              <Mic className="mr-2 h-4 w-4" /> ativar microfone
-            </Button>
+            {micDenied && (
+              <Button onClick={() => { reset(); setArmed(true); setMicDenied(false); navigator.mediaDevices?.getUserMedia({ audio: true }).then((s) => s.getTracks().forEach(t => t.stop())).catch(() => setMicDenied(true)); }} className="h-11 rounded-full bg-ink text-paper hover:bg-ink/90">
+                <Mic className="mr-2 h-4 w-4" /> ativar microfone
+              </Button>
+            )}
             <Button onClick={onBegin} variant="outline" className="h-11 rounded-full border-ink/20 hover:border-ink">
               ver mural primeiro <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
+
         </div>
       </section>
 
