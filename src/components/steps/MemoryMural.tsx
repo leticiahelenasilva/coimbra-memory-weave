@@ -68,7 +68,7 @@ export const MemoryMural = ({ onContinue, extraMemories = [] }: Props) => {
     <section className="relative h-screen w-full overflow-hidden bg-background">
       {/* Top bar */}
       <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between p-6">
-        <Stamp>mural · {floaters.length} memórias</Stamp>
+        <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">mural · {floaters.length} memórias</span>
         <div className="flex items-center gap-3">
           <div className="font-mono-ui text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             distância
