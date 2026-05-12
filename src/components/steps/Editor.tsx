@@ -124,7 +124,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-background px-6 py-8">
       <div className="flex items-center justify-between">
-        <Stamp>passo 04 · editor gestual</Stamp>
+        <span />
         <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           clica no postal para editar · diz <span className="text-ink">"enviar para o mural"</span> para partir
         </span>
@@ -293,48 +293,6 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
         {/* Controls */}
         <div className="lg:col-span-4">
           <div className="rounded-3xl border border-border bg-card/60 p-6 backdrop-blur">
-            <div className="mb-1 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" /> emoção detetada
-            </div>
-            <p className="mb-1 font-serif text-2xl text-ink">{emotion.label}</p>
-            <p className="mb-5 font-serif italic text-sm text-muted-foreground">
-              A tua frase foi lida e traduzida em três postais possíveis. Escolhe um deles.
-            </p>
-
-            <div className="ticket-divide mb-4 h-px" />
-
-            <div className="mb-4">
-              <div className="mb-2 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
-                <Hand className="h-3.5 w-3.5" /> gesto · escolher
-              </div>
-              <p className="font-mono-ui text-[11px] leading-relaxed text-muted-foreground">
-                Passa a mão para o lado do postal — esquerda ou direita — para ciclar entre as 3 opções geradas.
-                <br />
-                <span className="text-ink">← →</span> simulam o gesto.
-              </p>
-
-              <div className="mt-3 flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.22em]">
-                <Camera className="h-3 w-3" />
-                {camStatus === "idle" && <span className="text-muted-foreground">a iniciar câmara…</span>}
-                {camStatus === "requesting" && <span className="text-muted-foreground">a pedir permissão…</span>}
-                {camStatus === "granted" && <span className="text-ink">câmara ativa</span>}
-                {camStatus === "denied" && <span className="text-destructive">sem câmara · usa ← →</span>}
-                {camStatus === "unsupported" && <span className="text-destructive">câmara indisponível</span>}
-              </div>
-
-              {camStatus === "granted" && (
-                <div className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-ink/10">
-                  <div className="h-full bg-ink/60 transition-all" style={{ width: `${Math.min(100, camMotion.left * 600)}%` }} />
-                  <div className="ml-auto h-full bg-ink/60 transition-all" style={{ width: `${Math.min(100, camMotion.right * 600)}%` }} />
-                </div>
-              )}
-
-              <p className="mt-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                opção {variantIdx + 1} / {variants.length}
-              </p>
-            </div>
-
-            <div className="ticket-divide my-5 h-px" />
 
             <div className="space-y-3">
               <div>
