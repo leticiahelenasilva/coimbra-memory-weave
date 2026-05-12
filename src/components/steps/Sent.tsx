@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Stamp } from "../Stamp";
 import { Fog } from "../Fog";
 import { SEED_MEMORIES } from "@/data/memories";
+import { EMOTIONS, EmotionKey } from "@/data/emotions";
 import { Home, RotateCcw } from "lucide-react";
 
 interface Props {
   memory: string;
   extraMemories: string[];
+  emotion?: EmotionKey;
   onAgain: () => void;
   onHome: () => void;
 }
@@ -24,7 +25,8 @@ const positionFor = (i: number) => {
   };
 };
 
-export const Sent = ({ memory, extraMemories, onAgain, onHome }: Props) => {
+export const Sent = ({ memory, extraMemories, emotion, onAgain, onHome }: Props) => {
+  const accent = emotion ? EMOTIONS[emotion].variants[0].accent : undefined;
   const all = [...SEED_MEMORIES, ...extraMemories.filter((m) => m !== memory)];
 
   return (
@@ -33,7 +35,7 @@ export const Sent = ({ memory, extraMemories, onAgain, onHome }: Props) => {
 
       {/* Top */}
       <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between p-6">
-        <Stamp>enviado · obrigado</Stamp>
+        <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">enviado · obrigado</span>
         <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           mural · {all.length + 1} memórias
         </span>
@@ -80,8 +82,24 @@ export const Sent = ({ memory, extraMemories, onAgain, onHome }: Props) => {
             className="font-serif-display text-4xl leading-[1.05] text-ink md:text-6xl text-balance"
           >
             <span className="opacity-60">o que fica de Coimbra é</span>{" "}
-            <span className="highlight-yellow italic">{memory}</span>
-            <span className="text-lilac-deep">.</span>
+            <span
+              className="italic"
+              style={
+                accent
+                  ? {
+                      background: accent,
+                      color: "hsl(30 10% 12%)",
+                      padding: "0 0.15em",
+                      borderRadius: "0.15em",
+                      boxDecorationBreak: "clone",
+                      WebkitBoxDecorationBreak: "clone",
+                    }
+                  : undefined
+              }
+            >
+              {memory}
+            </span>
+            <span style={accent ? { color: accent } : undefined}>.</span>
           </motion.h2>
 
           <motion.p

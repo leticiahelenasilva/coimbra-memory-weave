@@ -151,6 +151,7 @@ const Index = () => {
             <Sent
               memory={memory}
               extraMemories={extraMemories}
+              emotion={emotion}
               onAgain={() => { setMemory(""); setEmotion(undefined); goto("recording"); }}
               onHome={() => { setMemory(""); setEmotion(undefined); goto("onboarding"); }}
             />
