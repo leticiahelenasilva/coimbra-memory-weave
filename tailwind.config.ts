@@ -68,6 +68,7 @@ export default {
           deep: "hsl(var(--lilac-deep))",
         },
         whisper: "hsl(var(--whisper-blue))",
+        "gold-deep": "hsl(var(--gold-deep))",
       },
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'Times New Roman', 'serif'],

@@ -50,6 +50,7 @@
     --lilac: 270 45% 86%;
     --lilac-deep: 270 40% 65%;
     --whisper-blue: 220 50% 65%;
+    --gold-deep: 41 100% 29%;
 
     /* Gradients */
     --gradient-fog: radial-gradient(ellipse at 50% 80%, hsl(220 30% 90% / 0.4), transparent 60%);
@@ -174,7 +175,6 @@
     transition: transform 700ms var(--transition-silk);
     transform-style: preserve-3d;
   }
-  .flip-card:hover .flip-inner,
   .flip-card.is-flipped .flip-inner { transform: rotateY(180deg); }
   .flip-face {
     position: absolute;
