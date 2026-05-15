@@ -291,12 +291,12 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
 
         {/* Controls */}
         <div className="lg:col-span-4">
-          <div className="rounded-3xl border border-border bg-card/60 p-6 backdrop-blur">
+          <div className="rounded-3xl bg-card p-6">
             <div className="mb-5 flex items-center justify-between border-b border-border pb-4">
               <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                 sentimento
               </span>
-              <span className="flex items-center gap-2 font-serif italic text-ink">
+              <span className="flex items-center gap-2 text-ink">
                 <span
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ background: variant.accent }}
@@ -316,7 +316,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                   onChange={(e) => setSender(e.target.value)}
                   placeholder="anónimo"
                   maxLength={40}
-                  className="h-10 rounded-xl font-serif italic"
+                  className="h-10 rounded-xl"
                 />
               </div>
               <div>
@@ -328,17 +328,17 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                   onChange={(e) => setDestination(e.target.value)}
                   placeholder="quem ler depois de mim"
                   maxLength={50}
-                  className="h-10 rounded-xl font-serif italic"
+                  className="h-10 rounded-xl"
                 />
               </div>
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-2">
-              <Button onClick={handleDownload} disabled={flying} variant="outline" className="h-11 rounded-full border-ink/20 hover:border-ink">
+              <Button onClick={handleDownload} disabled={flying} variant="secondary" className="h-11 rounded-full">
                 <Download className="mr-1.5 h-4 w-4" />
                 guardar png
               </Button>
-              <Button onClick={handleEmail} disabled={flying} variant="outline" className="h-11 rounded-full border-ink/20 hover:border-ink">
+              <Button onClick={handleEmail} disabled={flying} variant="secondary" className="h-11 rounded-full">
                 <Mail className="mr-1.5 h-4 w-4" />
                 enviar email
               </Button>
