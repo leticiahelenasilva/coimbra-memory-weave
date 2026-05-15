@@ -216,7 +216,8 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                           ✎ clica no texto para editar
                         </p>
                       </div>
-                    </div>
+                  </div>
+                  </PixelCard>
 
 
                     <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
