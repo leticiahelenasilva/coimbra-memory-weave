@@ -46,6 +46,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   const [sender, setSender] = useState("anónimo");
   const [destination, setDestination] = useState("quem ler depois de mim");
   const [swipeHint, setSwipeHint] = useState<"left" | "right" | null>(null);
+  const [flipped, setFlipped] = useState(false);
   const postcardRef = useRef<HTMLDivElement>(null);
 
   const variant: Variant = variants[variantIdx];
