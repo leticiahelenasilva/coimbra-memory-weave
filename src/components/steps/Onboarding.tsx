@@ -62,26 +62,31 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
   return (
     <div className="relative min-h-screen w-full bg-background">
       {/* ============ TOP NAV ============ */}
-      <header className="sticky top-0 z-40 flex items-center justify-center px-6 pt-6">
-        <nav className="flex items-center gap-1 rounded-full border border-border bg-card/85 px-2 py-1.5 shadow-md backdrop-blur">
-          <button onClick={scrollToMural} className="rounded-full px-4 py-2 font-mono-ui text-[11px] uppercase tracking-[0.18em] text-ink/70 transition hover:text-ink">
-            Mural de memórias
-          </button>
-          <button onClick={onBegin} className="rounded-full px-4 py-2 font-mono-ui text-[11px] uppercase tracking-[0.18em] text-ink/70 transition hover:text-ink">
-            Postais
-          </button>
-          <button
-            onClick={() => { reset(); setArmed(true); }}
-            className="ml-1 inline-flex items-center gap-2 rounded-full bg-yellow px-5 py-2 font-mono-ui text-[11px] uppercase tracking-[0.18em] text-ink shadow-md transition hover:scale-[1.02]"
-            title={listening ? "à escuta" : "ativar microfone"}
-          >
-            {listening ? "à escuta…" : "Fale o que fica de Coimbra"}
-            <span className={`grid h-6 w-6 place-items-center rounded-full bg-ink/90 text-paper ${listening ? "animate-pulse" : ""}`}>
-              <Mic className="h-3 w-3" />
-            </span>
-          </button>
-
-        </nav>
+      <header className="sticky top-0 z-40 bg-background/90 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-10 py-6">
+          <a href="/" className="text-lg text-ink">
+            O que fica de <span className="font-serif-display italic">Coimbra</span>
+          </a>
+          <nav className="flex items-center gap-10">
+            <button onClick={onBegin} className="text-sm text-ink/80 transition-colors hover:text-ink">
+              Postais
+            </button>
+            <button onClick={scrollToMural} className="text-sm text-ink/80 transition-colors hover:text-ink">
+              Mural de memórias
+            </button>
+            <button className="text-sm text-ink/80 transition-colors hover:text-ink">
+              Sobre o projeto
+            </button>
+            <button
+              onClick={() => { reset(); setArmed(true); }}
+              className="inline-flex items-center gap-2 rounded-full bg-yellow px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-yellow/90"
+              title={listening ? "à escuta" : "ativar microfone"}
+            >
+              {listening ? "à escuta…" : "Fale o que fica de Coimbra"}
+              <Mic className="h-4 w-4" />
+            </button>
+          </nav>
+        </div>
       </header>
 
       {/* ============ HERO ============ */}
@@ -90,8 +95,8 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
         <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
           {/* stacked postcards illustration */}
           <div className="relative mx-auto mb-10 h-[260px] w-[420px] max-w-full">
-            <div className="absolute left-[58%] top-2 h-20 w-28 rotate-[14deg] rounded-md border border-border bg-card shadow-md" />
-            <div className="absolute left-[68%] top-10 h-16 w-24 rotate-[8deg] rounded-md border border-border bg-card shadow-md" />
+            <div className="absolute left-[58%] top-2 h-20 w-28 rotate-[14deg] rounded-md border border-border bg-card" />
+            <div className="absolute left-[68%] top-10 h-16 w-24 rotate-[8deg] rounded-md border border-border bg-card" />
             <motion.div
               initial={{ y: 18, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -105,11 +110,11 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
             <span className="italic">Coimbra</span>
           </h1>
 
-          <p className="mt-6 max-w-md font-serif text-base leading-relaxed text-muted-foreground">
+          <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground">
             Adicione a sua memória ao arquivo e receba um cartão postal único da memória coletiva.
           </p>
 
-          <button onClick={scrollToMural} className="mt-10 flex flex-col items-center gap-2 font-mono-ui text-xs uppercase tracking-[0.22em] text-ink/80 transition hover:text-ink">
+          <button onClick={scrollToMural} className="mt-10 flex flex-col items-center gap-2 font-mono-ui text-xs uppercase tracking-[0.22em] text-ink/80 transition-colors hover:text-ink">
             <span className="border-b border-ink/30 pb-1">Veja o que ficou de Coimbra</span>
             <ChevronDown className="h-4 w-4 animate-bounce" />
           </button>
@@ -165,7 +170,7 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
           <Button
             onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
             size="lg"
-            className="h-12 rounded-full bg-yellow px-7 text-ink shadow-md hover:bg-yellow/90"
+            className="h-12 rounded-full bg-yellow px-7 text-ink hover:bg-yellow/90"
           >
             Fale o que fica de Coimbra
             <Mic className="ml-2 h-4 w-4" />
@@ -174,15 +179,15 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
       </section>
 
       {/* ============ ABOUT / VOICE STATUS ============ */}
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-border bg-card/60 p-8 backdrop-blur">
-          <p className="mb-2 font-mono-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground">sobre o projeto</p>
-          <p className="font-serif text-lg leading-relaxed text-ink/85">
+      <section className="px-6 py-24">
+        <div className="mx-auto max-w-3xl rounded-3xl bg-card p-10">
+          <p className="mb-3 font-mono-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground">sobre o projeto</p>
+          <p className="text-lg leading-relaxed text-ink/85">
             <span className="font-medium text-ink">O que fica de Coimbra</span> é um memorial digital interativo
             que recolhe vozes de quem viveu, passou ou sonhou esta cidade. Cada memória é gravada, transformada
             em tipografia generativa e enviada como um postal — para o mural coletivo e para quem vier depois.
           </p>
-          <div className="ticket-divide my-6 h-px" />
+          <div className="ticket-divide my-8 h-px" />
           <p className="font-mono-ui text-[11px] uppercase tracking-[0.2em] text-ink/80">
             como começar · diz em voz alta <span className="highlight-yellow text-ink">"o que fica de Coimbra é…"</span>
           </p>
@@ -193,13 +198,13 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
             {!micDenied && armed && !listening && supported && <span className="text-muted-foreground">a iniciar microfone…</span>}
             {!supported && <span className="text-destructive">reconhecimento de voz indisponível</span>}
           </div>
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             {micDenied && (
               <Button onClick={() => { reset(); setArmed(true); setMicDenied(false); navigator.mediaDevices?.getUserMedia({ audio: true }).then((s) => s.getTracks().forEach(t => t.stop())).catch(() => setMicDenied(true)); }} className="h-11 rounded-full bg-ink text-paper hover:bg-ink/90">
                 <Mic className="mr-2 h-4 w-4" /> ativar microfone
               </Button>
             )}
-            <Button onClick={onBegin} variant="outline" className="h-11 rounded-full border-ink/20 hover:border-ink">
+            <Button onClick={onBegin} variant="secondary" className="h-11 rounded-full">
               ver mural primeiro <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>

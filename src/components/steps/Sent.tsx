@@ -127,9 +127,9 @@ export const Sent = ({ memory, extraMemories, emotion, onAgain, onHome }: Props)
             </Button>
             <Button
               onClick={onHome}
-              variant="outline"
+              variant="secondary"
               size="lg"
-              className="h-14 rounded-full border-ink/30 px-8 hover:border-ink"
+              className="h-14 rounded-full px-8"
             >
               <Home className="mr-2 h-4 w-4" />
               voltar ao início

@@ -1,56 +1,56 @@
-## 1. Contraste AA do texto realçado (Editor.tsx)
+# Refino visual global + novo header
 
-O `<span>` com a frase editável usa um gradiente onde o `accent` (ex.: rosa neon `hsl(320 100% 65%)` para *euforia*) cobre o texto, mas a cor do texto continua a ser `variant.ink` (rosa escuro), o que falha WCAG AA — visível na imagem ("Tudo de bom que eu fiz Bêbado" sobre rosa).
+## 1. Header (Onboarding.tsx) conforme a imagem
 
-Correções:
-- Em vez do gradiente meio-fundo, aplicar o accent como **bloco de fundo sólido** (100%) atrás da frase, e usar uma **ink de alto contraste calculada por variante**.
-- Adicionar a cada `Variant` em `src/data/emotions.ts` um campo opcional `highlightInk` (cor do texto quando o fundo é `accent`). Para variantes "noite" / accents claros, `highlightInk` será `NIGHT` (#1c…); para accents escuros, será `PAPER`. Auditar todas as 33 variantes garantindo contraste ≥ 4.5:1.
-- No `Editor.tsx`, trocar o `linear-gradient(...)` por `background: variant.accent` e `color: variant.highlightInk ?? variant.bg`. Manter o mesmo `padding` para preservar o "marker" estético.
-- Aplicar a mesma regra ao "selo PT'26" no canto (mesmo problema accent/ink).
+Substituir a navbar atual (pílula central com borda) por um header horizontal full-width:
 
-## 2. Tela de carregamento entre Recording → Editor
+- Esquerda: wordmark "O que fica de *Coimbra*" — "Coimbra" em itálico serif (Cormorant), restante em Inter regular, na cor `ink`.
+- Direita (na mesma linha): links **Postais**, **Mural de memórias**, **Sobre o projeto** em Inter medium, cor `ink/80`, sem uppercase nem letter-spacing exagerado, hover apenas escurece a cor.
+- À direita do tudo: CTA pílula amarela **"Fale o que fica de Coimbra"** com ícone de mic sem o círculo escuro. Sem `shadow`, sem `hover:scale`.
+- Sem border, sem card, sem backdrop-blur. Padding generoso (px-10, py-6).
+- Mantém o trigger de voz e o `scrollToMural` existentes.
 
-Novo step `analyzing` que corre **antes** de `editor`, durante o qual a emoção é detetada **uma só vez** e fixada.
+## 2. Tipografia padrão Inter
 
-### Fluxo
-- `Recording.onComplete(text)` → `setStep("analyzing")` (em vez de `"editor"`).
-- Novo componente `src/components/steps/Analyzing.tsx`:
-  - Recebe `memory` e `onDone(emotionKey)`.
-  - Ao montar: chama `supabase.functions.invoke("detect-emotion", …)`. Em paralelo corre um timer mínimo de ~3.5s (para a animação respirar). Quando ambos terminam, chama `onDone(emotion)`.
-  - Em caso de erro/timeout (>8s), faz fallback para `detectEmotion(text)` heurístico.
-- `Index.tsx` guarda `emotionKey` no estado e passa-o para `Editor` como prop fixa.
-- `Editor.tsx`: remover o `useEffect` que invoca `detect-emotion`; passar a receber `initialEmotion: EmotionKey` via props e usá-lo como estado inicial **sem reagir a mudanças de texto** (a emoção fica trancada, como pedido).
+`tailwind.config.ts` → trocar `fontFamily.serif` para uso opcional. `index.css` body já usa Inter — manter. Auditar componentes que usam `font-serif` em UI utilitária e trocar para Inter:
 
-### Visual da tela (referência: imagem 5 — quadrado escuro com gradiente radial de pontos halftone)
-- Fundo `bg-ink` (quase preto) ocupando o ecrã todo.
-- Centro: cartão arredondado grande com **padrão halftone animado** (pontos cuja densidade/opacidade pulsam em onda radial) — implementado via SVG inline + `<motion.circle>` com `animate` em `opacity`/`r` decalado por índice, ou Canvas 2D com requestAnimationFrame se mais fluido. Sem libs novas — usar framer-motion já existente.
-- Glow sutil radial atrás do cartão a mudar de cor lentamente (mapeado a 3-4 hues neutros).
-- No meio do cartão, frases que rodam (cross-fade a cada ~1.4s):
-  1. "identificando sentimento"
-  2. "cuidando da sua memória"
-  3. "gerando postal"
-- Tipografia: `font-mono-ui text-xs uppercase tracking-[0.3em]` para o eyebrow + `font-serif italic` grande para a frase rotativa.
-- Pequena barra de progresso indeterminada na base do cartão.
+- Inputs do Editor (`font-serif italic` nos inputs/labels do painel direito) → Inter.
+- Texto "à escuta", legendas, parágrafos do Onboarding hero secundário, labels do Sent → Inter.
+- **Manter serif/artístico em**: hero `<h1>` "O que fica de Coimbra", postal (front+back), tela Analyzing (PixelBlast text), wordmark do header, marquee tipográfico das memórias.
 
-## 3. Navegação por URL (/passo1 … /passo4)
+## 3. Botões (`src/components/ui/button.tsx` + usos)
 
-`App.tsx` continua single-route. Em vez de adicionar rotas múltiplas, usar **um parâmetro de rota opcional** mapeado para o estado `step` em `Index.tsx`.
+- Remover `shadow*` de todas variantes/usos (`shadow-md`, `shadow-postcard` em botões).
+- Remover `transition-transform`/`hover:scale-*` de todos os botões.
+- Variant `outline`: trocar `hover:bg-accent hover:text-accent-foreground` (que está roxo via lilac) por `hover:bg-muted hover:text-ink`. Idem `ghost`.
+- Variant `secondary`: garantir que use cinza neutro, não lilac. Adicionar token `--secondary: 30 6% 92%` (cinza quente) e `--secondary-foreground: 30 8% 12%`. Botões secundários no app passam a usar `variant="secondary"` (preenchido cinza), não `variant="outline"`.
+- Auditar `Editor.tsx` (botões "guardar png", "enviar email") → trocar `variant="outline"` por `variant="secondary"`, remover bordas custom.
+- Amarelo dos botões vira: #FFFA6E
 
-- Adicionar rotas em `App.tsx`: `/`, `/passo1`, `/passo2`, `/passo3`, `/passo4`, `/passo5` → todas renderizam `<Index />`.
-- `Index.tsx` lê `useLocation()`/`useParams()` e mapeia:
-  - `/` ou `/passo1` → `onboarding`
-  - `/passo2` → `mural`
-  - `/passo3` → `recording`
-  - `/passo4` → `analyzing` (se faltar texto, redireciona para `/passo3`)
-  - `/passo5` → `editor` (se faltar texto/emoção, redireciona para `/passo3`)
-- Cada transição interna chama `navigate("/passoN")` em vez de só `setStep`. Um `useEffect` sincroniza URL ↔ estado para que recarregar a página mantenha o passo (com fallback gracioso quando faltam dados).
-- Memória/emoção persistem em `sessionStorage` para que `/passo5` recarregado consiga reconstruir o estado mínimo durante edições/testes.
+## 4. Sombras mais suaves
 
-> Nota: como pediste "passo1…passo4", uso `passo4` para a tela de loading e `passo5` para o editor. Se preferires manter só 4 passos visíveis, posso esconder o loading da numeração e usar `/passo4` direto para o editor — confirma se quiseres essa variante.
+`index.css`:
 
-## Ficheiros tocados
-- `src/data/emotions.ts` — adiciona `highlightInk` por variante; ajustes de contraste.
-- `src/components/steps/Editor.tsx` — usa `highlightInk`, fundo sólido; remove auto-detect; aceita `initialEmotion`.
-- `src/components/steps/Analyzing.tsx` — **novo**, animação halftone + frases rotativas + chamada à edge function.
-- `src/pages/Index.tsx` — novo step `analyzing`, guarda `emotionKey`, sincroniza com URL.
-- `src/App.tsx` — rotas `/passo1`..`/passo5`.
+- `--shadow-postcard`: reduzir para `0 1px 2px hsl(30 10% 50% / 0.04), 0 8px 24px -12px hsl(30 10% 30% / 0.10)`.
+- `--shadow-soft`: `0 1px 4px hsl(30 10% 30% / 0.04)`.
+- Remover `shadow-md` hardcoded das stacked postcards no hero (substituir por `border` sutil) e de outros locais que ainda usam `shadow-md`/`shadow-lg` Tailwind.
+
+## 5. Hierarquia por cor sólida + mais respiro
+
+- Trocar containers que usam `border border-border bg-card/60 backdrop-blur` por `bg-card` sólido sem borda (Editor painel direito, MemoryMural, etc.).
+- Aumentar padding base de seções (px-10 py-12 → py-16 onde couber).
+- Garantir que `bg-background` permaneça off-white claro e `bg-card` seja branco puro (`--card: 0 0% 100%`) para criar a hierarquia "card branco sobre fundo cinza" pedida. Ajustar `--background` para `30 6% 96%` (cinza quente claro) e `--card: 0 0% 100%`.
+- Remover bordas decorativas redundantes (ex.: `border-y` de seções) onde a cor já separa.
+
+## 6. Funcionamento
+
+Nada de lógica é alterada: roteamento /passo1-6, fluxo de gravação, detecção de emoção, postal, mural, envio — tudo intacto. Apenas tokens, classes utilitárias e markup do header.
+
+## Arquivos afetados
+
+- `src/index.css` — tokens (background/card/secondary), sombras.
+- `tailwind.config.ts` — (sem mudança de fonte default; Inter já é sans).
+- `src/components/ui/button.tsx` — variants outline/ghost/secondary.
+- `src/components/steps/Onboarding.tsx` — header novo + remover shadow-md das postcards.
+- `src/components/steps/Editor.tsx` — botões secondary, remover serif italic dos inputs/labels.
+- `src/components/steps/MemoryMural.tsx`, `Recording.tsx`, `Sent.tsx`, `Analyzing.tsx` — auditoria de shadow/hover/scale/serif em UI não-artística.
