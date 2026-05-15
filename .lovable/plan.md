@@ -1,56 +1,42 @@
-# Refino visual global + novo header
+# Refinos: passo 5, hero CTA, scroll-stack e postal pixelado
 
-## 1. Header (Onboarding.tsx) conforme a imagem
+## 1. Card do passo 5 (`Editor.tsx` painel direito) — match da referência
 
-Substituir a navbar atual (pílula central com borda) por um header horizontal full-width:
+- Cabeçalho: "sentimento" em Inter regular cinza à esquerda; à direita, badge pulsante (já feito) + nome do sentimento em **itálico serif** (`font-serif-display italic`) na cor `variant.accent`. Border-bottom suave.
+- Labels "Remetente" / "Destino" em Inter regular **capitalizado** (não uppercase, sem `font-mono-ui`, sem letter-spacing). text-base, cor ink.
+- Inputs maiores (h-12), rounded-2xl, border sutil `border-border`, fundo branco, fonte Inter normal.
+- Botões secundários renomeados: "Salvar como imagem" e "Enviar por e-mail" (Inter, capitalizado). Mantém `variant="secondary"`, h-12, rounded-full, ícone à direita. Empilhados (não 2 colunas).
+- Botão principal "Enviar para o mural" (capitalizado, send à direita), h-14, rounded-full, bg-ink.
+- Abaixo: separador `─── ou fale ───` (linha cinza + texto + linha), depois `● "Enviar para o mural"` (bolinha vermelha estática + texto entre aspas).
+- Padding do card aumenta para p-8 e space-y-6 entre blocos.
 
-- Esquerda: wordmark "O que fica de *Coimbra*" — "Coimbra" em itálico serif (Cormorant), restante em Inter regular, na cor `ink`.
-- Direita (na mesma linha): links **Postais**, **Mural de memórias**, **Sobre o projeto** em Inter medium, cor `ink/80`, sem uppercase nem letter-spacing exagerado, hover apenas escurece a cor.
-- À direita do tudo: CTA pílula amarela **"Fale o que fica de Coimbra"** com ícone de mic sem o círculo escuro. Sem `shadow`, sem `hover:scale`.
-- Sem border, sem card, sem backdrop-blur. Padding generoso (px-10, py-6).
-- Mantém o trigger de voz e o `scrollToMural` existentes.
+## 2. CTA hero "Veja o que ficou de Coimbra" (`Onboarding.tsx`)
 
-## 2. Tipografia padrão Inter
+- Sentence case (não uppercase), Inter medium, sem `font-mono-ui` nem letter-spacing.
+- Cor `#946D00`. Adicionar token `--gold-deep: 41 100% 29%` em `index.css` e cor `gold-deep` em `tailwind.config.ts`.
+- Underline contínuo no texto + chevron animado abaixo.
 
-`tailwind.config.ts` → trocar `fontFamily.serif` para uso opcional. `index.css` body já usa Inter — manter. Auditar componentes que usam `font-serif` em UI utilitária e trocar para Inter:
+## 3. Scroll-stack nas seções "Recolha cartões" e "Sobre o projeto"
 
-- Inputs do Editor (`font-serif italic` nos inputs/labels do painel direito) → Inter.
-- Texto "à escuta", legendas, parágrafos do Onboarding hero secundário, labels do Sent → Inter.
-- **Manter serif/artístico em**: hero `<h1>` "O que fica de Coimbra", postal (front+back), tela Analyzing (PixelBlast text), wordmark do header, marquee tipográfico das memórias.
+- Criar `src/components/ScrollStack.tsx` inspirado em reactbits.dev/components/scroll-stack, usando `framer-motion` (`useScroll` + `useTransform` por item). Cada `<ScrollStackItem>` fica sticky no viewport e recebe leve `scale` + `translateY` conforme o progresso, criando o efeito de empilhar cards.
+- Envolver as duas seções existentes ("postcards preview" + "about / voice status") com `<ScrollStack>` contendo 2 `<ScrollStackItem>`. Conteúdo, copy e botões intactos.
 
-## 3. Botões (`src/components/ui/button.tsx` + usos)
+## 4. Postal: flip ao clicar + hover pixelado (`Editor.tsx`)
 
-- Remover `shadow*` de todas variantes/usos (`shadow-md`, `shadow-postcard` em botões).
-- Remover `transition-transform`/`hover:scale-*` de todos os botões.
-- Variant `outline`: trocar `hover:bg-accent hover:text-accent-foreground` (que está roxo via lilac) por `hover:bg-muted hover:text-ink`. Idem `ghost`.
-- Variant `secondary`: garantir que use cinza neutro, não lilac. Adicionar token `--secondary: 30 6% 92%` (cinza quente) e `--secondary-foreground: 30 8% 12%`. Botões secundários no app passam a usar `variant="secondary"` (preenchido cinza), não `variant="outline"`.
-- Auditar `Editor.tsx` (botões "guardar png", "enviar email") → trocar `variant="outline"` por `variant="secondary"`, remover bordas custom.
-- Amarelo dos botões vira: #FFFA6E
+- Remover regra CSS `.flip-card:hover .flip-inner { transform: rotateY(180deg) }` em `index.css`. Manter só `.flip-card.is-flipped`.
+- Estado local `flipped` no Editor; `onClick` no wrapper do postal alterna. `e.stopPropagation()` nos campos contentEditable e nas setas para não disparar flip ao editar/navegar.
+- Criar `src/components/PixelCard.tsx` + `PixelCard.css` (variante CSS+JS pura inspirada em reactbits.dev/components/pixel-card): canvas absoluto sobre o card, no `mouseenter` anima uma grade de pixels coloridos aparecendo (fade-in escalonado), no `mouseleave` desfaz. Aceita prop `color` (usa `variant.accent`). `pointer-events: none` para não bloquear clique/edição.
+- Wrappar o lado **front** do postal com `<PixelCard color={variant.accent}>`. Lado back não tem o efeito.
 
-## 4. Sombras mais suaves
+## 5. Arquivos afetados
 
-`index.css`:
+- `src/index.css` — adiciona `--gold-deep`; remove `:hover` flip; mantém keyframes existentes.
+- `tailwind.config.ts` — registra cor `gold-deep`.
+- `src/components/steps/Onboarding.tsx` — CTA hero (case/cor/estilo) + envolve as duas seções com `<ScrollStack>`.
+- `src/components/steps/Editor.tsx` — refina painel direito (tipografia, labels, copy/empilhamento dos botões, separador "ou fale"), adiciona estado `flipped` + onClick, wrappa front com `<PixelCard>`.
+- `src/components/ScrollStack.tsx` (novo) — scroll-stack via framer-motion.
+- `src/components/PixelCard.tsx` (novo) + `src/components/PixelCard.css` (novo) — efeito pixelado no hover.
 
-- `--shadow-postcard`: reduzir para `0 1px 2px hsl(30 10% 50% / 0.04), 0 8px 24px -12px hsl(30 10% 30% / 0.10)`.
-- `--shadow-soft`: `0 1px 4px hsl(30 10% 30% / 0.04)`.
-- Remover `shadow-md` hardcoded das stacked postcards no hero (substituir por `border` sutil) e de outros locais que ainda usam `shadow-md`/`shadow-lg` Tailwind.
+## 6. Funcionamento preservado
 
-## 5. Hierarquia por cor sólida + mais respiro
-
-- Trocar containers que usam `border border-border bg-card/60 backdrop-blur` por `bg-card` sólido sem borda (Editor painel direito, MemoryMural, etc.).
-- Aumentar padding base de seções (px-10 py-12 → py-16 onde couber).
-- Garantir que `bg-background` permaneça off-white claro e `bg-card` seja branco puro (`--card: 0 0% 100%`) para criar a hierarquia "card branco sobre fundo cinza" pedida. Ajustar `--background` para `30 6% 96%` (cinza quente claro) e `--card: 0 0% 100%`.
-- Remover bordas decorativas redundantes (ex.: `border-y` de seções) onde a cor já separa.
-
-## 6. Funcionamento
-
-Nada de lógica é alterada: roteamento /passo1-6, fluxo de gravação, detecção de emoção, postal, mural, envio — tudo intacto. Apenas tokens, classes utilitárias e markup do header.
-
-## Arquivos afetados
-
-- `src/index.css` — tokens (background/card/secondary), sombras.
-- `tailwind.config.ts` — (sem mudança de fonte default; Inter já é sans).
-- `src/components/ui/button.tsx` — variants outline/ghost/secondary.
-- `src/components/steps/Onboarding.tsx` — header novo + remover shadow-md das postcards.
-- `src/components/steps/Editor.tsx` — botões secondary, remover serif italic dos inputs/labels.
-- `src/components/steps/MemoryMural.tsx`, `Recording.tsx`, `Sent.tsx`, `Analyzing.tsx` — auditoria de shadow/hover/scale/serif em UI não-artística.
+Gravação, detecção de emoção, swipe de variantes, envio para o mural, reconhecimento de voz e atalhos de teclado permanecem intactos. Apenas tokens, markup e wrappers de animação mudam.
