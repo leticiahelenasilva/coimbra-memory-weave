@@ -159,13 +159,21 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: swipeHint === "right" ? -60 : 60 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className={`flip-card relative mx-auto aspect-[7/5] w-full max-w-3xl ${flying ? "animate-fly-away" : ""}`}
+                onClick={(e) => {
+                  // Don't flip when interacting with editable text
+                  const t = e.target as HTMLElement;
+                  if (t.isContentEditable || t.closest('[contenteditable="true"]')) return;
+                  if (flying) return;
+                  setFlipped((v) => !v);
+                }}
+                className={`flip-card relative mx-auto aspect-[7/5] w-full max-w-3xl cursor-pointer ${flipped ? "is-flipped" : ""} ${flying ? "animate-fly-away" : ""}`}
               >
                 <div className="flip-inner">
                   {/* FRONT */}
+                  <PixelCard color={variant.accent} className="flip-face rounded-[2rem]">
                   <div
                     ref={postcardRef}
-                    className="flip-face paper rounded-[2rem] p-10"
+                    className="paper rounded-[2rem] p-10 h-full w-full"
                     style={{ background: variant.bg, color: variant.ink }}
                   >
                     <div className="flex items-start justify-between">
