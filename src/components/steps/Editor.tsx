@@ -297,11 +297,20 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                 sentimento
               </span>
               <span className="flex items-center gap-2 text-ink">
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ background: variant.accent }}
-                  aria-hidden
-                />
+                <span className="relative grid h-3 w-3 place-items-center" aria-hidden>
+                  <span
+                    className="absolute inset-0 rounded-full animate-emotion-pulse-outer"
+                    style={{ background: variant.accent }}
+                  />
+                  <span
+                    className="absolute inset-[3px] rounded-full animate-emotion-pulse-inner"
+                    style={{ background: variant.accent }}
+                  />
+                  <span
+                    className="relative h-1.5 w-1.5 rounded-full"
+                    style={{ background: variant.accent }}
+                  />
+                </span>
                 {emotion.label}
               </span>
             </div>
