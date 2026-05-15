@@ -179,15 +179,15 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
       </section>
 
       {/* ============ ABOUT / VOICE STATUS ============ */}
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-border bg-card/60 p-8 backdrop-blur">
-          <p className="mb-2 font-mono-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground">sobre o projeto</p>
-          <p className="font-serif text-lg leading-relaxed text-ink/85">
+      <section className="px-6 py-24">
+        <div className="mx-auto max-w-3xl rounded-3xl bg-card p-10">
+          <p className="mb-3 font-mono-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground">sobre o projeto</p>
+          <p className="text-lg leading-relaxed text-ink/85">
             <span className="font-medium text-ink">O que fica de Coimbra</span> é um memorial digital interativo
             que recolhe vozes de quem viveu, passou ou sonhou esta cidade. Cada memória é gravada, transformada
             em tipografia generativa e enviada como um postal — para o mural coletivo e para quem vier depois.
           </p>
-          <div className="ticket-divide my-6 h-px" />
+          <div className="ticket-divide my-8 h-px" />
           <p className="font-mono-ui text-[11px] uppercase tracking-[0.2em] text-ink/80">
             como começar · diz em voz alta <span className="highlight-yellow text-ink">"o que fica de Coimbra é…"</span>
           </p>
@@ -198,13 +198,13 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
             {!micDenied && armed && !listening && supported && <span className="text-muted-foreground">a iniciar microfone…</span>}
             {!supported && <span className="text-destructive">reconhecimento de voz indisponível</span>}
           </div>
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             {micDenied && (
               <Button onClick={() => { reset(); setArmed(true); setMicDenied(false); navigator.mediaDevices?.getUserMedia({ audio: true }).then((s) => s.getTracks().forEach(t => t.stop())).catch(() => setMicDenied(true)); }} className="h-11 rounded-full bg-ink text-paper hover:bg-ink/90">
                 <Mic className="mr-2 h-4 w-4" /> ativar microfone
               </Button>
             )}
-            <Button onClick={onBegin} variant="outline" className="h-11 rounded-full border-ink/20 hover:border-ink">
+            <Button onClick={onBegin} variant="secondary" className="h-11 rounded-full">
               ver mural primeiro <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
