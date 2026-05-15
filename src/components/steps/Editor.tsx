@@ -302,12 +302,13 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
 
         {/* Controls */}
         <div className="lg:col-span-4">
-          <div className="rounded-3xl bg-card p-6">
-            <div className="mb-5 flex items-center justify-between border-b border-border pb-4">
-              <span className="font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                sentimento
-              </span>
-              <span className="flex items-center gap-2 text-ink">
+          <div className="rounded-3xl bg-card p-8">
+            <div className="mb-6 flex items-center justify-between border-b border-border pb-5">
+              <span className="text-sm text-muted-foreground">sentimento</span>
+              <span
+                className="flex items-center gap-2 font-serif-display italic text-lg"
+                style={{ color: variant.accent }}
+              >
                 <span className="relative grid h-3 w-3 place-items-center" aria-hidden>
                   <span
                     className="absolute inset-0 rounded-full animate-emotion-pulse-outer"
@@ -326,56 +327,57 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
               </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-5">
               <div>
-                <label className="mb-1.5 block font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
-                  remetente
-                </label>
+                <label className="mb-2 block text-base text-ink">Remetente</label>
                 <Input
                   value={sender}
                   onChange={(e) => setSender(e.target.value)}
                   placeholder="anónimo"
                   maxLength={40}
-                  className="h-10 rounded-xl"
+                  className="h-12 rounded-2xl border-border bg-card text-base"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block font-mono-ui text-[10px] uppercase tracking-[0.22em] text-ink">
-                  destino
-                </label>
+                <label className="mb-2 block text-base text-ink">Destino</label>
                 <Input
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
                   placeholder="quem ler depois de mim"
                   maxLength={50}
-                  className="h-10 rounded-xl"
+                  className="h-12 rounded-2xl border-border bg-card text-base"
                 />
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-2">
-              <Button onClick={handleDownload} disabled={flying} variant="secondary" className="h-11 rounded-full">
-                <Download className="mr-1.5 h-4 w-4" />
-                guardar png
+            <div className="mt-6 space-y-3">
+              <Button onClick={handleDownload} disabled={flying} variant="secondary" className="h-12 w-full justify-center rounded-full text-base">
+                Salvar como imagem
+                <Download className="ml-2 h-4 w-4" />
               </Button>
-              <Button onClick={handleEmail} disabled={flying} variant="secondary" className="h-11 rounded-full">
-                <Mail className="mr-1.5 h-4 w-4" />
-                enviar email
+              <Button onClick={handleEmail} disabled={flying} variant="secondary" className="h-12 w-full justify-center rounded-full text-base">
+                Enviar por e-mail
+                <Mail className="ml-2 h-4 w-4" />
+              </Button>
+              <Button
+                onClick={handleSend}
+                disabled={flying}
+                size="lg"
+                className="h-14 w-full rounded-full bg-ink text-paper hover:bg-ink/90"
+              >
+                Enviar para o mural
+                <Send className="ml-2 h-4 w-4" />
               </Button>
             </div>
 
-            <Button
-              onClick={handleSend}
-              disabled={flying}
-              size="lg"
-              className="mt-3 h-14 w-full rounded-full bg-ink text-paper hover:bg-ink/90"
-            >
-              <Send className="mr-2 h-4 w-4" />
-              enviar para o mural
-            </Button>
-            <div className="mt-2 flex items-center justify-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              <span className={`h-1.5 w-1.5 rounded-full ${listening ? "bg-destructive" : "bg-muted-foreground/40"}`} />
-              {listening ? <>diz "enviar para o mural"</> : <>microfone parado</>}
+            <div className="mt-6 flex items-center gap-3 text-sm text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              <span>ou fale</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <div className="mt-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <span className="h-2 w-2 rounded-full bg-destructive" />
+              <span>“Enviar para o mural”</span>
             </div>
           </div>
         </div>
