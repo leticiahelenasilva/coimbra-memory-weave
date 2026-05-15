@@ -170,7 +170,7 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
           <Button
             onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
             size="lg"
-            className="h-12 rounded-full bg-yellow px-7 text-ink shadow-md hover:bg-yellow/90"
+            className="h-12 rounded-full bg-yellow px-7 text-ink hover:bg-yellow/90"
           >
             Fale o que fica de Coimbra
             <Mic className="ml-2 h-4 w-4" />
