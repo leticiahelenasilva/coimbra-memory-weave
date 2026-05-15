@@ -114,8 +114,8 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
             Adicione a sua memória ao arquivo e receba um cartão postal único da memória coletiva.
           </p>
 
-          <button onClick={scrollToMural} className="mt-10 flex flex-col items-center gap-2 font-mono-ui text-xs uppercase tracking-[0.22em] text-ink/80 transition-colors hover:text-ink">
-            <span className="border-b border-ink/30 pb-1">Veja o que ficou de Coimbra</span>
+          <button onClick={scrollToMural} className="mt-10 flex flex-col items-center gap-2 text-sm font-medium text-gold-deep transition-opacity hover:opacity-80">
+            <span className="underline underline-offset-4">Veja o que ficou de Coimbra</span>
             <ChevronDown className="h-4 w-4 animate-bounce" />
           </button>
         </div>
