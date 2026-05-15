@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
 import { EMOTIONS } from "@/data/emotions";
+import { ScrollStack, ScrollStackItem } from "../ScrollStack";
 
 interface Props {
   onBegin: () => void;
