@@ -363,7 +363,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
               enviar para o mural
             </Button>
             <div className="mt-2 flex items-center justify-center gap-2 font-mono-ui text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              <span className={`h-1.5 w-1.5 rounded-full ${listening ? "animate-pulse bg-destructive" : "bg-muted-foreground/40"}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${listening ? "bg-destructive" : "bg-muted-foreground/40"}`} />
               {listening ? <>diz "enviar para o mural"</> : <>microfone parado</>}
             </div>
           </div>
