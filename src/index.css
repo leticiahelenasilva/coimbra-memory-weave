@@ -191,3 +191,16 @@
   }
   .animate-marquee { animation: marquee var(--marquee-dur, 60s) linear infinite; }
 }
+
+@layer utilities {
+  @keyframes emotion-pulse-outer {
+    0%, 100% { opacity: 0.12; }
+    50% { opacity: 0.28; }
+  }
+  @keyframes emotion-pulse-inner {
+    0%, 100% { opacity: 0.28; }
+    50% { opacity: 0.55; }
+  }
+  .animate-emotion-pulse-outer { animation: emotion-pulse-outer 2.2s ease-in-out infinite; }
+  .animate-emotion-pulse-inner { animation: emotion-pulse-inner 2.2s ease-in-out infinite; }
+}
