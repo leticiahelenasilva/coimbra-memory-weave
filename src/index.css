@@ -10,55 +10,55 @@
 
 @layer base {
   :root {
-    /* Editorial off-white base */
-    --background: 60 20% 97%;        /* #F9F9F7 */
+    /* Soft warm gray base */
+    --background: 30 6% 96%;
     --foreground: 30 8% 12%;
 
-    --card: 60 20% 97%;
+    --card: 0 0% 100%;
     --card-foreground: 30 8% 12%;
 
-    --popover: 60 20% 97%;
+    --popover: 0 0% 100%;
     --popover-foreground: 30 8% 12%;
 
-    /* Vibrant yellow as primary accent */
-    --primary: 60 100% 50%;          /* #FFFF00 */
+    /* Brand yellow #FFFA6E */
+    --primary: 57 100% 72%;
     --primary-foreground: 30 8% 12%;
 
-    /* Soft lilac for stamps + secondary */
-    --secondary: 270 45% 86%;
-    --secondary-foreground: 270 30% 25%;
+    /* Neutral warm gray secondary */
+    --secondary: 30 6% 92%;
+    --secondary-foreground: 30 8% 12%;
 
-    --muted: 50 12% 92%;
+    --muted: 30 6% 92%;
     --muted-foreground: 30 6% 42%;
 
-    --accent: 270 45% 86%;           /* lilac */
-    --accent-foreground: 270 30% 25%;
+    --accent: 30 6% 92%;
+    --accent-foreground: 30 8% 12%;
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 60 20% 97%;
 
-    --border: 30 8% 88%;
-    --input: 30 8% 88%;
-    --ring: 60 100% 45%;
+    --border: 30 8% 90%;
+    --input: 30 8% 90%;
+    --ring: 57 100% 60%;
 
     /* Brand specifics */
     --ink: 30 8% 12%;
-    --paper: 60 20% 97%;
+    --paper: 0 0% 100%;
     --paper-shadow: 30 10% 80%;
-    --yellow: 60 100% 50%;
-    --yellow-soft: 55 100% 70%;
+    --yellow: 57 100% 72%;
+    --yellow-soft: 55 100% 80%;
     --lilac: 270 45% 86%;
     --lilac-deep: 270 40% 65%;
     --whisper-blue: 220 50% 65%;
 
     /* Gradients */
-    --gradient-fog: radial-gradient(ellipse at 50% 80%, hsl(220 30% 90% / 0.6), transparent 60%);
-    --gradient-paper: linear-gradient(180deg, hsl(60 25% 98%), hsl(50 15% 94%));
+    --gradient-fog: radial-gradient(ellipse at 50% 80%, hsl(220 30% 90% / 0.4), transparent 60%);
+    --gradient-paper: linear-gradient(180deg, hsl(0 0% 100%), hsl(30 8% 97%));
     --gradient-stamp: linear-gradient(135deg, hsl(var(--lilac)), hsl(var(--lilac-deep)));
 
-    /* Shadows — paper-like */
-    --shadow-postcard: 0 1px 2px hsl(30 10% 50% / 0.08), 0 20px 40px -20px hsl(30 10% 30% / 0.25);
-    --shadow-soft: 0 2px 12px hsl(30 10% 30% / 0.06);
+    /* Shadows — soft, subtle */
+    --shadow-postcard: 0 1px 2px hsl(30 10% 50% / 0.04), 0 8px 24px -12px hsl(30 10% 30% / 0.10);
+    --shadow-soft: 0 1px 4px hsl(30 10% 30% / 0.04);
 
     --transition-silk: cubic-bezier(0.22, 1, 0.36, 1);
 
