@@ -8,6 +8,7 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
 import { detectEmotion, EMOTIONS, EmotionKey, Variant } from "@/data/emotions";
+import { PixelCard } from "@/components/PixelCard";
 
 
 // Strip the trigger phrase if it leaked into the captured memory
