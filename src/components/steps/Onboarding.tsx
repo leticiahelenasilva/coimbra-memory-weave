@@ -7,6 +7,7 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
 import { EMOTIONS } from "@/data/emotions";
 import { ScrollStack, ScrollStackItem } from "../ScrollStack";
+import postalImage from "../../../assets/postal.png";
 
 interface Props {
   onBegin: () => void;
@@ -94,16 +95,24 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
       <section className="relative overflow-hidden px-6 pb-20 pt-10">
         <Fog />
         <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
-          {/* stacked postcards illustration */}
-          <div className="relative mx-auto mb-10 h-[260px] w-[420px] max-w-full">
-            <div className="absolute left-[58%] top-2 h-20 w-28 rotate-[14deg] rounded-md border border-border bg-card" />
-            <div className="absolute left-[68%] top-10 h-16 w-24 rotate-[8deg] rounded-md border border-border bg-card" />
+          <div className="relative mx-auto mb-10 flex h-[260px] w-full max-w-[520px] items-center justify-center">
             <motion.div
-              initial={{ y: 18, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-              className="paper absolute left-1/2 top-6 h-[200px] w-[320px] -translate-x-1/2 -rotate-[3deg] rounded-2xl"
-            />
+              initial={{ y: 18, opacity: 0, rotate: -2 }}
+              animate={{ y: [0, -12, 0], opacity: 1, rotate: [-2, 1.5, -2] }}
+              transition={{
+                opacity: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+                y: { duration: 5.5, repeat: Infinity, ease: "easeInOut" },
+                rotate: { duration: 5.5, repeat: Infinity, ease: "easeInOut" },
+              }}
+              className="w-full max-w-[430px] drop-shadow-[0_24px_45px_rgba(32,27,22,0.16)]"
+            >
+              <img
+                src={postalImage}
+                alt="Postal ilustrado de Coimbra"
+                className="block h-auto w-full select-none object-contain"
+                draggable={false}
+              />
+            </motion.div>
           </div>
 
           <h1 className="font-serif-display text-[clamp(2.6rem,6vw,5rem)] font-medium leading-[0.92] text-ink">

@@ -29,6 +29,113 @@ interface Props {
 // High-contrast text color for the accent-colored highlight block (WCAG AA).
 // All accents in EMOTIONS are bright (lightness 45-80%), so dark NIGHT works universally.
 const HIGHLIGHT_INK = "hsl(30 10% 12%)";
+const WHITE_RGB = { r: 255, g: 255, b: 255 };
+const AA_CONTRAST_RATIO = 4.5;
+
+const parseHsl = (color: string) => {
+  const match = color.match(/hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%/i);
+  if (!match) return null;
+
+  return {
+    h: Number(match[1]),
+    s: Number(match[2]),
+    l: Number(match[3]),
+  };
+};
+
+const hslToRgb = ({ h, s, l }: { h: number; s: number; l: number }) => {
+  const hue = (((h % 360) + 360) % 360) / 360;
+  const saturation = s / 100;
+  const lightness = l / 100;
+
+  if (saturation === 0) {
+    const value = Math.round(lightness * 255);
+    return { r: value, g: value, b: value };
+  }
+
+  const hueToRgb = (p: number, q: number, t: number) => {
+    let adjusted = t;
+    if (adjusted < 0) adjusted += 1;
+    if (adjusted > 1) adjusted -= 1;
+    if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
+    if (adjusted < 1 / 2) return q;
+    if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
+    return p;
+  };
+
+  const q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
+  const p = 2 * lightness - q;
+
+  return {
+    r: Math.round(hueToRgb(p, q, hue + 1 / 3) * 255),
+    g: Math.round(hueToRgb(p, q, hue) * 255),
+    b: Math.round(hueToRgb(p, q, hue - 1 / 3) * 255),
+  };
+};
+
+const relativeLuminance = ({ r, g, b }: { r: number; g: number; b: number }) => {
+  const channels = [r, g, b].map((channel) => {
+    const srgb = channel / 255;
+    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  });
+
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+};
+
+const contrastRatio = (a: { r: number; g: number; b: number }, b: { r: number; g: number; b: number }) => {
+  const lighter = Math.max(relativeLuminance(a), relativeLuminance(b));
+  const darker = Math.min(relativeLuminance(a), relativeLuminance(b));
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+const getAaTextColorOnWhite = (accent: string) => {
+  const hsl = parseHsl(accent);
+  if (!hsl) return HIGHLIGHT_INK;
+
+  if (contrastRatio(hslToRgb(hsl), WHITE_RGB) >= AA_CONTRAST_RATIO) {
+    return accent;
+  }
+
+  for (let lightness = Math.floor(hsl.l) - 1; lightness >= 0; lightness -= 1) {
+    const candidate = { ...hsl, l: lightness };
+    if (contrastRatio(hslToRgb(candidate), WHITE_RGB) >= AA_CONTRAST_RATIO) {
+      return `hsl(${hsl.h} ${hsl.s}% ${lightness}%)`;
+    }
+  }
+
+  return HIGHLIGHT_INK;
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const formatHsl = ({ h, s, l }: { h: number; s: number; l: number }) =>
+  `hsl(${h} ${s}% ${l}%)`;
+
+const isDarkHsl = (color: string) => {
+  const hsl = parseHsl(color);
+  if (!hsl) return false;
+  return relativeLuminance(hslToRgb(hsl)) < 0.18;
+};
+
+const getEmotionPixelColors = (variant: Variant) => {
+  const accent = parseHsl(variant.accent);
+  const ink = parseHsl(variant.ink);
+  if (!accent) return variant.accent;
+
+  if (isDarkHsl(variant.bg)) {
+    return [
+      formatHsl({ ...accent, s: clamp(accent.s, 55, 100), l: clamp(accent.l + 16, 70, 88) }),
+      formatHsl({ ...accent, s: clamp(accent.s, 45, 100), l: clamp(accent.l + 26, 78, 94) }),
+      ink ? formatHsl({ ...ink, l: clamp(ink.l + 8, 76, 96) }) : formatHsl({ ...accent, l: 92 }),
+    ].join(",");
+  }
+
+  return [
+    variant.accent,
+    formatHsl({ ...accent, l: clamp(accent.l + 18, 64, 88) }),
+    ink ? variant.ink : formatHsl({ ...accent, l: clamp(accent.l - 18, 24, 48) }),
+  ].join(",");
+};
 
 export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   const initialClean = useMemo(() => cleanMemory(memory), [memory]);
@@ -50,6 +157,9 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   const postcardRef = useRef<HTMLDivElement>(null);
 
   const variant: Variant = variants[variantIdx];
+  const isDarkPostcard = useMemo(() => isDarkHsl(variant.bg), [variant.bg]);
+  const emotionTextColor = useMemo(() => getAaTextColorOnWhite(variant.accent), [variant.accent]);
+  const emotionPixelColors = useMemo(() => getEmotionPixelColors(variant), [variant]);
 
   // Emotion is locked from Analyzing step — no auto re-detection here.
 
@@ -170,58 +280,71 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
               >
                 <div className="flip-inner">
                   {/* FRONT */}
-                  <PixelCard color={variant.accent} className="flip-face rounded-[2rem]">
+                  <PixelCard
+                    colors={emotionPixelColors}
+                    gap={isDarkPostcard ? 6 : 10}
+                    speed={isDarkPostcard ? 35 : 25}
+                    maxPixelSize={isDarkPostcard ? 3.5 : 2}
+                    noFocus
+                    className="flip-face rounded-[2rem]"
+                  >
                   <div
                     ref={postcardRef}
-                    className="paper rounded-[2rem] p-10 h-full w-full"
-                    style={{ background: variant.bg, color: variant.ink }}
+                    className="relative h-full w-full overflow-hidden rounded-[2rem]"
+                    style={{ color: variant.ink }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="font-mono-ui text-[10px] uppercase tracking-[0.25em] opacity-70">
-                        postal · coimbra · {emotion.label}
+                    <div
+                      className="paper absolute inset-0 z-0 rounded-[2rem]"
+                      style={{ background: variant.bg }}
+                    />
+                    <div className="relative z-[3] h-full w-full p-10">
+                      <div className="flex items-start justify-between">
+                        <div className="font-mono-ui text-[10px] uppercase tracking-[0.25em] opacity-70">
+                          postal · coimbra · {emotion.label}
+                        </div>
+                        <div
+                          className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
+                          style={{ background: variant.accent, color: HIGHLIGHT_INK }}
+                        >
+                          pt'26
+                        </div>
                       </div>
-                      <div
-                        className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
-                        style={{ background: variant.accent, color: HIGHLIGHT_INK }}
-                      >
-                        pt'26
+
+                      <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
+                        <div className="col-span-12">
+                          <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
+                            <span style={{ opacity: 0.6 }}>o que fica de Coimbra é</span>{" "}
+                            <span
+                              contentEditable={!flying}
+                              suppressContentEditableWarning
+                              onBlur={(e) => setEditedMemory(e.currentTarget.textContent?.trim() || "")}
+                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } }}
+                              spellCheck={false}
+                              className="relative z-[4] rounded-sm backdrop-blur-xl outline-none focus:ring-2 focus:ring-offset-2"
+                              style={{
+                                background: variant.accent,
+                                padding: "0 0.15em",
+                                color: HIGHLIGHT_INK,
+                                boxDecorationBreak: "clone",
+                                WebkitBoxDecorationBreak: "clone",
+                                minWidth: "1ch",
+                              } as React.CSSProperties}
+                            >
+                              {cleanedMemory}
+                            </span>
+                            <span style={{ color: variant.accent }}>.</span>
+                          </p>
+                          <p className="mt-3 font-mono-ui text-[10px] uppercase tracking-[0.2em]" style={{ opacity: 0.5 }}>
+                            ✎ clica no texto para editar
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
-                      <div className="col-span-12">
-                        <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
-                          <span style={{ opacity: 0.6 }}>o que fica de Coimbra é</span>{" "}
-                          <span
-                            contentEditable={!flying}
-                            suppressContentEditableWarning
-                            onBlur={(e) => setEditedMemory(e.currentTarget.textContent?.trim() || "")}
-                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } }}
-                            spellCheck={false}
-                            className="rounded-sm outline-none focus:ring-2 focus:ring-offset-2"
-                            style={{
-                              background: variant.accent,
-                              padding: "0 0.15em",
-                              color: HIGHLIGHT_INK,
-                              boxDecorationBreak: "clone",
-                              WebkitBoxDecorationBreak: "clone",
-                              minWidth: "1ch",
-                            } as React.CSSProperties}
-                          >
-                            {cleanedMemory}
-                          </span>
-                          <span style={{ color: variant.accent }}>.</span>
-                        </p>
-                        <p className="mt-3 font-mono-ui text-[10px] uppercase tracking-[0.2em]" style={{ opacity: 0.5 }}>
-                          ✎ clica no texto para editar
-                        </p>
+
+                      <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
+                        <span>{variant.name}</span>
+                        <span>{variant.fontLabel}</span>
                       </div>
-                    </div>
-
-
-                    <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
-                      <span>{variant.name}</span>
-                      <span>{variant.fontLabel}</span>
                     </div>
                   </div>
                   </PixelCard>
@@ -302,24 +425,20 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
 
         {/* Controls */}
         <div className="lg:col-span-4">
-          <div className="rounded-3xl bg-card p-8">
-            <div className="mb-6 flex items-center justify-between border-b border-border pb-5">
-              <span className="text-sm text-muted-foreground">sentimento</span>
+          <div className="overflow-hidden rounded-[24px] bg-white">
+            <div className="flex items-center justify-between border-b border-ink/5 px-6 pb-3 pt-6">
+              <span className="text-base font-normal leading-[1.4] text-muted-foreground">sentimento</span>
               <span
-                className="flex items-center gap-2 font-serif-display italic text-lg"
-                style={{ color: variant.accent }}
+                className="flex items-center justify-end gap-2 text-base font-semibold italic leading-[1.4]"
+                style={{ color: emotionTextColor }}
               >
-                <span className="relative grid h-3 w-3 place-items-center" aria-hidden>
+                <span className="relative grid h-2 w-2 place-items-center" aria-hidden>
                   <span
-                    className="absolute inset-0 rounded-full animate-emotion-pulse-outer"
+                    className="absolute -inset-1 rounded-full animate-emotion-pulse-halo"
                     style={{ background: variant.accent }}
                   />
                   <span
-                    className="absolute inset-[3px] rounded-full animate-emotion-pulse-inner"
-                    style={{ background: variant.accent }}
-                  />
-                  <span
-                    className="relative h-1.5 w-1.5 rounded-full"
+                    className="relative h-2 w-2 rounded-full"
                     style={{ background: variant.accent }}
                   />
                 </span>
@@ -327,57 +446,61 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
               </span>
             </div>
 
-            <div className="space-y-5">
-              <div>
-                <label className="mb-2 block text-base text-ink">Remetente</label>
-                <Input
-                  value={sender}
-                  onChange={(e) => setSender(e.target.value)}
-                  placeholder="anónimo"
-                  maxLength={40}
-                  className="h-12 rounded-2xl border-border bg-card text-base"
-                />
+            <div className="p-6">
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-2 block text-base font-normal leading-[1.4] text-ink">Remetente</label>
+                  <Input
+                    value={sender}
+                    onChange={(e) => setSender(e.target.value)}
+                    placeholder="anónimo"
+                    maxLength={40}
+                    className="h-14 rounded-[16px] border-[#d9d9d9] bg-white px-4 text-base text-ink shadow-none md:text-base"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-base font-normal leading-[1.4] text-ink">Destino</label>
+                  <Input
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    placeholder="quem ler depois de mim"
+                    maxLength={50}
+                    className="h-14 rounded-[16px] border-[#d9d9d9] bg-white px-4 text-base text-ink shadow-none md:text-base"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="mb-2 block text-base text-ink">Destino</label>
-                <Input
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  placeholder="quem ler depois de mim"
-                  maxLength={50}
-                  className="h-12 rounded-2xl border-border bg-card text-base"
-                />
+
+              <div className="mt-6 space-y-3">
+                <Button onClick={handleDownload} disabled={flying} variant="secondary" className="h-12 w-full justify-center rounded-full bg-[#e3e3e3] px-4 text-base font-normal text-ink hover:bg-[#d9d9d9]">
+                  Salvar como imagem
+                  <Download className="ml-0 h-4 w-4" />
+                </Button>
+                <Button onClick={handleEmail} disabled={flying} variant="secondary" className="h-12 w-full justify-center rounded-full bg-[#e3e3e3] px-4 text-base font-normal text-ink hover:bg-[#d9d9d9]">
+                  Enviar por e-mail
+                  <Mail className="ml-0 h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={handleSend}
+                  disabled={flying}
+                  size="lg"
+                  className="h-12 w-full rounded-full bg-ink px-4 text-base font-normal text-paper hover:bg-ink/90"
+                >
+                  Enviar para o mural
+                  <Send className="ml-0 h-4 w-4" />
+                </Button>
               </div>
-            </div>
 
-            <div className="mt-6 space-y-3">
-              <Button onClick={handleDownload} disabled={flying} variant="secondary" className="h-12 w-full justify-center rounded-full text-base">
-                Salvar como imagem
-                <Download className="ml-2 h-4 w-4" />
-              </Button>
-              <Button onClick={handleEmail} disabled={flying} variant="secondary" className="h-12 w-full justify-center rounded-full text-base">
-                Enviar por e-mail
-                <Mail className="ml-2 h-4 w-4" />
-              </Button>
-              <Button
-                onClick={handleSend}
-                disabled={flying}
-                size="lg"
-                className="h-14 w-full rounded-full bg-ink text-paper hover:bg-ink/90"
-              >
-                Enviar para o mural
-                <Send className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="mt-6 flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="h-px flex-1 bg-border" />
-              <span>ou fale</span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <div className="mt-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <span className="h-2 w-2 rounded-full bg-destructive" />
-              <span>“Enviar para o mural”</span>
+              <div className="mt-3 space-y-8">
+                <div className="flex items-center justify-center text-sm leading-[1.4] text-[#b3b3b3]">
+                  <span className="h-px flex-1 bg-[#d9d9d9]" />
+                  <span className="px-4">ou fale</span>
+                  <span className="h-px flex-1 bg-[#d9d9d9]" />
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm leading-[1.4] text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full bg-destructive" />
+                  <span>”Enviar para o mural”</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
