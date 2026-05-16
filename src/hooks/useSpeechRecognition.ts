@@ -1,6 +1,59 @@
 import { useEffect, useRef, useState } from "react";
 
-type SR = any;
+type SpeechRecognitionErrorCode =
+  | "no-speech"
+  | "aborted"
+  | "audio-capture"
+  | "network"
+  | "not-allowed"
+  | "service-not-allowed"
+  | "bad-grammar"
+  | "language-not-supported";
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+}
+
+interface SpeechRecognitionResult {
+  readonly isFinal: boolean;
+  readonly [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  readonly [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionEvent {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent {
+  readonly error: SpeechRecognitionErrorCode;
+}
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInstance;
+}
+
+interface SpeechWindow extends Window {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+}
 
 interface Options {
   lang?: string;
@@ -8,33 +61,32 @@ interface Options {
 }
 
 /**
- * Speech Recognition wrapper. Optimized for low-latency interim results and
- * resilient auto-restart on `no-speech` / `aborted` / `network`.
+ * Wrapper de reconhecimento de voz com resultados intermédios rápidos e retoma automática.
  */
 export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [supported, setSupported] = useState(true);
   const [listening, setListening] = useState(false);
-  const recRef = useRef<SR | null>(null);
+  const recRef = useRef<SpeechRecognitionInstance | null>(null);
   const enabledRef = useRef(enabled);
   const restartTimerRef = useRef<number | null>(null);
   enabledRef.current = enabled;
 
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as SpeechWindow;
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setSupported(false);
       return;
     }
-    const rec: SR = new SpeechRecognition();
+    const rec = new SpeechRecognition();
     rec.lang = lang;
     rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
 
-    rec.onresult = (event: any) => {
+    rec.onresult = (event) => {
       let finalT = "";
       let interimT = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -42,7 +94,6 @@ export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
         if (res.isFinal) finalT += res[0].transcript;
         else interimT += res[0].transcript;
       }
-      // Update synchronously — React batches but interim flushes on next paint
       if (finalT) {
         setTranscript((t) => (t + " " + finalT).trim());
         setInterim("");
@@ -56,23 +107,31 @@ export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
       if (enabledRef.current) {
         if (restartTimerRef.current) window.clearTimeout(restartTimerRef.current);
         restartTimerRef.current = window.setTimeout(() => {
-          try { rec.start(); } catch {}
+          try {
+            rec.start();
+          } catch {
+            // Alguns browsers lançam erro se o reconhecimento já estiver ativo.
+          }
         }, 120);
       }
     };
-    rec.onerror = (e: any) => {
+    rec.onerror = (e) => {
       const err = e?.error;
       if (err && err !== "no-speech" && err !== "aborted") {
         console.warn("[SpeechRecognition] error:", err);
       }
-      // for network/audio-capture errors, allow onend to retry
     };
     recRef.current = rec;
 
     return () => {
       enabledRef.current = false;
       if (restartTimerRef.current) window.clearTimeout(restartTimerRef.current);
-      try { rec.onend = null; rec.stop(); } catch {}
+      try {
+        rec.onend = null;
+        rec.stop();
+      } catch {
+        // Mantém a limpeza local mesmo quando a Web Speech API já terminou a sessão.
+      }
       recRef.current = null;
       setListening(false);
     };
@@ -82,9 +141,17 @@ export const useSpeechRecognition = ({ lang = "pt-PT", enabled }: Options) => {
     const rec = recRef.current;
     if (!rec) return;
     if (enabled) {
-      try { rec.start(); } catch {}
+      try {
+        rec.start();
+      } catch {
+        // Ignora tentativas duplicadas disparadas por mudanças rápidas de estado.
+      }
     } else {
-      try { rec.stop(); } catch {}
+      try {
+        rec.stop();
+      } catch {
+        // Ignora paragens redundantes quando o browser já encerrou a captura.
+      }
     }
   }, [enabled]);
 

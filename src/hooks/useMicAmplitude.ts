@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
+interface AudioWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
 /**
- * Returns a 0..1 amplitude value sampled from the microphone.
- * Falls back to a gentle simulated wave if mic is unavailable.
+ * Devolve uma amplitude 0..1 do microfone, com fallback visual quando não há permissão.
  */
 export const useMicAmplitude = (enabled: boolean) => {
   const [amplitude, setAmplitude] = useState(0);
@@ -23,7 +26,12 @@ export const useMicAmplitude = (enabled: boolean) => {
           return;
         }
         streamRef.current = stream;
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioWindow = window as AudioWindow;
+        const AudioContextConstructor = audioWindow.AudioContext || audioWindow.webkitAudioContext;
+        if (!AudioContextConstructor) {
+          throw new Error("AudioContext is not supported");
+        }
+        const ctx = new AudioContextConstructor();
         ctxRef.current = ctx;
         const source = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
@@ -40,14 +48,12 @@ export const useMicAmplitude = (enabled: boolean) => {
             sum += v * v;
           }
           const rms = Math.sqrt(sum / buf.length);
-          // Boost a bit for visual impact
           setAmplitude(Math.min(1, rms * 2.6));
           rafRef.current = requestAnimationFrame(tick);
         };
         tick();
       } catch {
         setHasMic(false);
-        // Gentle sim fallback
         let t = 0;
         const tick = () => {
           t += 0.05;
