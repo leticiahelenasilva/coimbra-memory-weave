@@ -70,18 +70,18 @@ export const Analyzing = ({ memory, onDone }: Props) => {
       {/* PixelBlast animated background */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <PixelBlast
-          variant="circle"
-          pixelSize={5}
-          color="#FFFA6E"
-          patternScale={2.2}
-          patternDensity={2.85}
-          pixelSizeJitter={0.3}
+          variant="square"
+          pixelSize={4}
+          color="#5d5d5d"
+          patternScale={2}
+          patternDensity={1}
+          pixelSizeJitter={0}
           enableRipples
           rippleSpeed={0.4}
           rippleThickness={0.12}
-          rippleIntensityScale={1.5}
-          speed={0.7}
-          edgeFade={0.04}
+          rippleIntensityScale={1.0}
+          speed={0.5}
+          edgeFade={0.25}
           transparent
         />
       </div>
