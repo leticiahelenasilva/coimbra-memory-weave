@@ -193,14 +193,15 @@
 }
 
 @layer utilities {
-  @keyframes emotion-pulse-outer {
-    0%, 100% { opacity: 0.12; }
-    50% { opacity: 0.28; }
+  @keyframes emotion-pulse-halo {
+    0%, 100% {
+      opacity: 0.18;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.42;
+      transform: scale(1.35);
+    }
   }
-  @keyframes emotion-pulse-inner {
-    0%, 100% { opacity: 0.28; }
-    50% { opacity: 0.55; }
-  }
-  .animate-emotion-pulse-outer { animation: emotion-pulse-outer 2.2s ease-in-out infinite; }
-  .animate-emotion-pulse-inner { animation: emotion-pulse-inner 2.2s ease-in-out infinite; }
+  .animate-emotion-pulse-halo { animation: emotion-pulse-halo 2.2s ease-in-out infinite; }
 }

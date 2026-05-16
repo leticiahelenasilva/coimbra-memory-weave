@@ -62,25 +62,26 @@ export const Analyzing = ({ memory, onDone }: Props) => {
 
   return (
     <section className="relative grid min-h-screen w-full place-items-center overflow-hidden bg-ink px-6 py-10">
+      <div
+        className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_45%,rgba(232,201,160,0.16),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.18))]"
+        aria-hidden="true"
+      />
+
       {/* PixelBlast animated background */}
-      <div className="absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 z-0">
         <PixelBlast
           variant="circle"
-          pixelSize={6}
-          color="#E8C9A0"
-          patternScale={3}
-          patternDensity={1.2}
-          pixelSizeJitter={0.5}
+          pixelSize={5}
+          color="#FFFA6E"
+          patternScale={2.2}
+          patternDensity={2.85}
+          pixelSizeJitter={0.3}
           enableRipples
           rippleSpeed={0.4}
           rippleThickness={0.12}
           rippleIntensityScale={1.5}
-          liquid
-          liquidStrength={0.12}
-          liquidRadius={1.2}
-          liquidWobbleSpeed={5}
-          speed={0.6}
-          edgeFade={0.25}
+          speed={0.7}
+          edgeFade={0.04}
           transparent
         />
       </div>
