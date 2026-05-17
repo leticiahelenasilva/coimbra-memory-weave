@@ -202,6 +202,17 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
 
   const handleSend = () => {
     setFlying(true);
+    // Fire-and-forget submission to the backend (moderation queue).
+    // We don't block the flying animation on the network round-trip.
+    supabase.functions
+      .invoke("submit-postcard", {
+        body: {
+          memory: cleanedMemory,
+          sender: sender && sender !== "anónimo" ? sender : null,
+          recipient: destination && destination !== "quem ler depois de mim" ? destination : null,
+        },
+      })
+      .catch((e) => console.error("[Editor] submit-postcard failed", e));
     setTimeout(() => onSend(), 1500);
   };
 
