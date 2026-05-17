@@ -108,7 +108,7 @@ export const Sent = ({ memory, extraMemories, emotion, onAgain, onHome }: Props)
             transition={{ duration: 1, delay: 1 }}
             className="mt-10 font-serif italic text-muted-foreground"
           >
-            partiu com o vento do Mondego — fica para quem chegar depois.
+            partiu com o vento do Mondego — assim que for aprovada, ficará no mural para quem chegar depois.
           </motion.p>
 
           <motion.div

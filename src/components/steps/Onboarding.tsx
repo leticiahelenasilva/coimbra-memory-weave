@@ -7,6 +7,8 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
 import { EMOTIONS } from "@/data/emotions";
 import { ScrollStack, ScrollStackItem } from "../ScrollStack";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { usePostcards } from "@/hooks/usePostcards";
 import postalImage from "../../../assets/postal.png";
 
 interface Props {
@@ -158,27 +160,16 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
       <ScrollStack className="bg-muted/30">
         <ScrollStackItem>
           <section className="relative overflow-hidden rounded-3xl bg-card px-6 py-16 shadow-soft">
-            <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-3">
-              <div className="paper relative aspect-[7/5] -rotate-3 rounded-2xl p-5" style={{ background: "hsl(30 8% 12%)", color: "hsl(60 20% 97%)" }}>
-                <p className="font-serif italic text-[10px] opacity-70">o que fica de Coimbra é</p>
-                <p className="mt-2 font-mono-ui text-[11px] leading-tight">Depois de escurecer, não vou ao Jardim da Sereia / Vou pro jardim da AAC! / Tenho uma relação amor/ódio com o 34…</p>
-              </div>
-
-              <div className="text-center font-serif text-sm text-muted-foreground">
+            <div className="mx-auto max-w-5xl text-center">
+              <p className="font-serif text-sm text-muted-foreground">
                 Recolha cartões postais únicos como recordação de
                 <span className="block font-medium italic text-ink">O que fica de Coimbra</span>
-              </div>
-
-              <div className="paper relative aspect-[7/5] rotate-2 rounded-2xl p-5">
-                <p className="font-serif italic text-lg text-lilac-deep">O que fica de Coimbra é…</p>
-                <p className="mt-3 font-serif text-[11px] leading-relaxed text-ink/80">
-                  O Jardim da Sereia ao anoitecer evoca memórias sombrias. As sombras dançam sob as árvores antigas…
-                </p>
-                <div className="absolute right-4 top-4 h-10 w-8 rounded-sm" style={{ background: "var(--gradient-stamp)" }} />
-              </div>
+              </p>
             </div>
 
-            <div className="mt-14 flex justify-center">
+            <PostcardsCarousel />
+
+            <div className="mt-12 flex justify-center">
               <Button
                 onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
                 size="lg"
@@ -246,3 +237,68 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
     </div>
   );
 };
+
+// ============ POSTCARDS CAROUSEL ============
+const PostcardsCarousel = () => {
+  const { postcards, loading } = usePostcards();
+
+  // Fallback to seeds when no approved postcards yet
+  const items = useMemo(() => {
+    if (postcards.length > 0) {
+      return postcards.map((p) => ({
+        id: p.id,
+        text: p.memory,
+        emotion: p.emotion,
+        sender: p.sender,
+        recipient: p.recipient,
+      }));
+    }
+    return EMOTION_SEEDS.slice(0, 12).map((s, i) => ({
+      id: `seed-${i}`,
+      text: s.text,
+      emotion: s.emotion,
+      sender: null as string | null,
+      recipient: null as string | null,
+    }));
+  }, [postcards]);
+
+  if (loading && postcards.length === 0) {
+    return <div className="mt-10 h-72 animate-pulse rounded-2xl bg-muted/40" />;
+  }
+
+  return (
+    <div className="mt-10">
+      <Carousel opts={{ align: "start", loop: true }} className="mx-auto max-w-6xl">
+        <CarouselContent className="-ml-4">
+          {items.map((item) => {
+            const e = EMOTIONS[item.emotion];
+            const v = e.variants[0];
+            return (
+              <CarouselItem key={item.id} className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3">
+                <article
+                  className="paper relative flex aspect-[7/5] flex-col justify-between rounded-2xl p-6 shadow-soft"
+                  style={{ background: v.bg, color: v.ink }}
+                >
+                  <p className="font-serif italic text-[11px] opacity-60">o que fica de Coimbra é</p>
+                  <p
+                    className={`my-4 line-clamp-4 text-base leading-snug ${v.fontCls}`}
+                    style={{ color: v.ink }}
+                  >
+                    {item.text}
+                  </p>
+                  <div className="flex items-end justify-between gap-2 text-[10px] opacity-70">
+                    <span className="font-mono-ui uppercase tracking-[0.18em]">{e.label}</span>
+                    {item.sender && <span className="italic">— {item.sender}</span>}
+                  </div>
+                </article>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+        <CarouselPrevious className="hidden md:flex" />
+        <CarouselNext className="hidden md:flex" />
+      </Carousel>
+    </div>
+  );
+};
+
