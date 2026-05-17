@@ -46,6 +46,12 @@ type CardRotateProps = {
 };
 
 const EMPTY_CARDS: ReactNode[] = [];
+const STACK_ROTATIONS = [-3, 2, -4, 3, -2];
+
+const getCardRotation = (index: number, stackLength: number, offset = 0) => {
+  if (index === stackLength - 1) return 0;
+  return STACK_ROTATIONS[(stackLength - index - 2) % STACK_ROTATIONS.length] + offset;
+};
 
 const DEFAULT_CARDS: StackCard[] = [
   {
@@ -218,35 +224,42 @@ export const Stack = forwardRef<StackHandle, StackProps>(
     return (
       <div
         className="stack-container"
+        data-testid="stack-container"
         onMouseEnter={() => pauseOnHover && setIsPaused(true)}
         onMouseLeave={() => pauseOnHover && setIsPaused(false)}
       >
-        {stack.map((card, index) => (
-          <CardRotate
-            key={card.id}
-            onSendToBack={() => sendToBack(card.id)}
-            sensitivity={sensitivity}
-            disableDrag={shouldDisableDrag}
-          >
-            <motion.div
-              className="stack-card"
-              onClick={() => shouldEnableClick && sendToBack(card.id)}
-              animate={{
-                rotateZ: (stack.length - index - 1) * 4 + (cardRotations[card.id - 1] ?? 0),
-                scale: 1 + index * 0.06 - stack.length * 0.06,
-                transformOrigin: "90% 90%",
-              }}
-              initial={false}
-              transition={{
-                type: "spring",
-                stiffness: animationConfig.stiffness,
-                damping: animationConfig.damping,
-              }}
+        {stack.map((card, index) => {
+          const rotateZ = getCardRotation(index, stack.length, cardRotations[card.id - 1] ?? 0);
+
+          return (
+            <CardRotate
+              key={card.id}
+              onSendToBack={() => sendToBack(card.id)}
+              sensitivity={sensitivity}
+              disableDrag={shouldDisableDrag}
             >
-              {card.content}
-            </motion.div>
-          </CardRotate>
-        ))}
+              <motion.div
+                className="stack-card"
+                onClick={() => shouldEnableClick && sendToBack(card.id)}
+                animate={{
+                  rotateZ,
+                  scale: 1 + index * 0.06 - stack.length * 0.06,
+                  transformOrigin: "90% 90%",
+                }}
+                data-top-card={index === stack.length - 1 ? "true" : "false"}
+                data-rotate-z={rotateZ}
+                initial={false}
+                transition={{
+                  type: "spring",
+                  stiffness: animationConfig.stiffness,
+                  damping: animationConfig.damping,
+                }}
+              >
+                {card.content}
+              </motion.div>
+            </CardRotate>
+          );
+        })}
       </div>
     );
   },

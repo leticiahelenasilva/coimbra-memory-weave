@@ -5,10 +5,10 @@ import { Fog } from "../Fog";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
-import { EMOTIONS, type Variant } from "@/data/emotions";
+import { EMOTIONS } from "@/data/emotions";
 import { ScrollStack, ScrollStackItem } from "../ScrollStack";
 import { usePostcards } from "@/hooks/usePostcards";
-import { PixelCard } from "@/components/PixelCard";
+import { PostcardFront } from "@/components/PostcardFront";
 import { Stack, type StackHandle } from "@/components/Stack";
 import postalImage from "../../../assets/postal.png";
 
@@ -18,87 +18,9 @@ interface Props {
 }
 
 const TRIGGER = "o que fica de coimbra";
-const HIGHLIGHT_INK = "hsl(30 10% 12%)";
-
-const parseHsl = (color: string) => {
-  const match = color.match(/hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%/i);
-  if (!match) return null;
-
-  return {
-    h: Number(match[1]),
-    s: Number(match[2]),
-    l: Number(match[3]),
-  };
-};
-
-const hslToRgb = ({ h, s, l }: { h: number; s: number; l: number }) => {
-  const hue = (((h % 360) + 360) % 360) / 360;
-  const saturation = s / 100;
-  const lightness = l / 100;
-
-  if (saturation === 0) {
-    const value = Math.round(lightness * 255);
-    return { r: value, g: value, b: value };
-  }
-
-  const hueToRgb = (p: number, q: number, t: number) => {
-    let adjusted = t;
-    if (adjusted < 0) adjusted += 1;
-    if (adjusted > 1) adjusted -= 1;
-    if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
-    if (adjusted < 1 / 2) return q;
-    if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
-    return p;
-  };
-
-  const q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
-  const p = 2 * lightness - q;
-
-  return {
-    r: Math.round(hueToRgb(p, q, hue + 1 / 3) * 255),
-    g: Math.round(hueToRgb(p, q, hue) * 255),
-    b: Math.round(hueToRgb(p, q, hue - 1 / 3) * 255),
-  };
-};
-
-const relativeLuminance = ({ r, g, b }: { r: number; g: number; b: number }) => {
-  const channels = [r, g, b].map((channel) => {
-    const srgb = channel / 255;
-    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
-  });
-
-  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-};
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
-const formatHsl = ({ h, s, l }: { h: number; s: number; l: number }) =>
-  `hsl(${h} ${s}% ${l}%)`;
-
-const isDarkHsl = (color: string) => {
-  const hsl = parseHsl(color);
-  if (!hsl) return false;
-  return relativeLuminance(hslToRgb(hsl)) < 0.18;
-};
-
-const getEmotionPixelColors = (variant: Variant) => {
-  const accent = parseHsl(variant.accent);
-  const ink = parseHsl(variant.ink);
-  if (!accent) return variant.accent;
-
-  if (isDarkHsl(variant.bg)) {
-    return [
-      formatHsl({ ...accent, s: clamp(accent.s, 55, 100), l: clamp(accent.l + 16, 70, 88) }),
-      formatHsl({ ...accent, s: clamp(accent.s, 45, 100), l: clamp(accent.l + 26, 78, 94) }),
-      ink ? formatHsl({ ...ink, l: clamp(ink.l + 8, 76, 96) }) : formatHsl({ ...accent, l: 92 }),
-    ].join(",");
-  }
-
-  return [
-    variant.accent,
-    formatHsl({ ...accent, l: clamp(accent.l + 18, 64, 88) }),
-    ink ? variant.ink : formatHsl({ ...accent, l: clamp(accent.l - 18, 24, 48) }),
-  ].join(",");
+const getVariantIndex = (value: unknown) => {
+  if (typeof value !== "number" || !Number.isInteger(value)) return 0;
+  return value >= 0 && value <= 2 ? value : 0;
 };
 
 export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
@@ -293,6 +215,7 @@ const PostcardsStack = () => {
         id: p.id,
         text: p.memory,
         emotion: p.emotion,
+        variantIdx: getVariantIndex(p.variant_idx),
         sender: p.sender,
         recipient: p.recipient,
       }));
@@ -301,6 +224,7 @@ const PostcardsStack = () => {
       id: `seed-${i}`,
       text: s.text,
       emotion: s.emotion,
+      variantIdx: 0,
       sender: null as string | null,
       recipient: null as string | null,
     }));
@@ -308,46 +232,17 @@ const PostcardsStack = () => {
 
   const renderPostcard = useCallback((item: (typeof items)[number]) => {
     const e = EMOTIONS[item.emotion];
-    const v = e.variants[0];
-    const pixelColors = getEmotionPixelColors(v);
-    const isDarkPostcard = isDarkHsl(v.bg);
-    const sender = item.sender?.trim() || "anónimo";
+    const v = e.variants[item.variantIdx] ?? e.variants[0];
 
     return (
-      <PixelCard
-        colors={pixelColors}
-        gap={isDarkPostcard ? 6 : 10}
-        speed={isDarkPostcard ? 35 : 25}
-        maxPixelSize={isDarkPostcard ? 3.5 : 2}
-        noFocus
+      <PostcardFront
+        memory={item.text}
+        emotionLabel={e.label}
+        variant={v}
         className="aspect-[2/1] rounded-[15px] drop-shadow-[0_1px_2px_rgba(12,12,13,0.05)]"
-      >
-        <article
-          className="relative z-[3] flex h-full w-full flex-col justify-between overflow-hidden rounded-[15px] bg-gradient-to-b from-white to-[#f6f6f6] px-6 py-8 md:py-10"
-          style={{ color: v.ink }}
-        >
-          <p className="font-serif italic text-[clamp(0.8rem,1.5vw,1.5rem)] leading-none text-muted-foreground">
-            O que fica de Coimbra é
-          </p>
-          <p
-            className={`line-clamp-3 min-w-full break-words text-[clamp(1.4rem,3.1vw,2.25rem)] leading-none ${v.fontCls}`}
-            style={{ color: v.accent }}
-          >
-            {item.text}
-          </p>
-          <div className="flex w-full items-center justify-between gap-4">
-            <span
-              className="inline-flex shrink-0 items-center justify-center rounded-full px-3 py-2 text-sm leading-none"
-              style={{ background: v.accent, color: HIGHLIGHT_INK }}
-            >
-              {e.label}
-            </span>
-            <span className="truncate text-right text-base leading-none text-muted-foreground">
-              &mdash; {sender}
-            </span>
-          </div>
-        </article>
-      </PixelCard>
+        radiusClassName="rounded-[15px]"
+        contentClassName="px-6 py-8 md:p-10"
+      />
     );
   }, []);
 
@@ -368,6 +263,9 @@ const PostcardsStack = () => {
           sensitivity={180}
           sendToBackOnClick
           mobileClickOnly
+          autoplay
+          autoplayDelay={3000}
+          pauseOnHover
           cards={stackCards}
           animationConfig={{ stiffness: 260, damping: 22 }}
         />

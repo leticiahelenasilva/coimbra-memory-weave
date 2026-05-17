@@ -41,6 +41,7 @@ O projeto é uma aplicação frontend em React + TypeScript com Vite, Tailwind C
 │   ├── components/
 │   │   ├── Fog.tsx
 │   │   ├── NavLink.tsx
+│   │   ├── PostcardFront.tsx
 │   │   ├── PixelBlast.css
 │   │   ├── PixelBlast.jsx
 │   │   ├── PixelCard.css
@@ -73,6 +74,7 @@ O projeto é uma aplicação frontend em React + TypeScript com Vite, Tailwind C
 │   │       ├── client.ts
 │   │       └── types.ts
 │   ├── lib/
+│   │   ├── postcardStyle.ts
 │   │   └── utils.ts
 │   ├── pages/
 │   │   ├── Index.tsx
@@ -97,11 +99,13 @@ O projeto é uma aplicação frontend em React + TypeScript com Vite, Tailwind C
 
 `src/components/steps/` contém telas de fluxo com responsabilidade de produto: `Onboarding`, `MemoryMural`, `Recording`, `Analyzing`, `Editor` e `Sent`. Novas etapas do fluxo devem entrar aqui. O `Onboarding` usa `assets/postal.png` como imagem principal do postal animado.
 
-`src/components/` contém componentes reutilizáveis de experiência visual e navegação, como névoa, selos, stack de scroll, stack interativo de postais, cartões pixelados e efeitos WebGL.
+`src/components/` contém componentes reutilizáveis de experiência visual e navegação, como névoa, selos, stack de scroll, stack interativo de postais, cartões pixelados, frente compartilhada do postal e efeitos WebGL.
 
 `src/components/ui/` contém componentes base shadcn/ui. Esses arquivos devem continuar genéricos, reaproveitáveis e sem regras específicas do memorial, exceto ajustes visuais compatíveis com o design system.
 
 `src/data/` concentra dados e regras de domínio leves. `emotions.ts` define emoções, variantes visuais, palavras-chave e heurística local. `memories.ts` define frases-semente do mural.
+
+`src/lib/postcardStyle.ts` concentra helpers visuais compartilhados pelo editor e pela home para que a variante do postal mantenha cores, contraste e efeito pixelado consistentes.
 
 `src/hooks/` concentra lógica reutilizável ligada ao navegador: reconhecimento de voz, amplitude do microfone, gesto por câmera, toast e breakpoint mobile. Hooks que interagem com APIs com suporte desigual entre browsers devem declarar tipos locais mínimos em vez de recorrer a `any`.
 
