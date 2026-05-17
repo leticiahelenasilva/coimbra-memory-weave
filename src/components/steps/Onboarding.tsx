@@ -237,3 +237,68 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
     </div>
   );
 };
+
+// ============ POSTCARDS CAROUSEL ============
+const PostcardsCarousel = () => {
+  const { postcards, loading } = usePostcards();
+
+  // Fallback to seeds when no approved postcards yet
+  const items = useMemo(() => {
+    if (postcards.length > 0) {
+      return postcards.map((p) => ({
+        id: p.id,
+        text: p.memory,
+        emotion: p.emotion,
+        sender: p.sender,
+        recipient: p.recipient,
+      }));
+    }
+    return EMOTION_SEEDS.slice(0, 12).map((s, i) => ({
+      id: `seed-${i}`,
+      text: s.text,
+      emotion: s.emotion,
+      sender: null as string | null,
+      recipient: null as string | null,
+    }));
+  }, [postcards]);
+
+  if (loading && postcards.length === 0) {
+    return <div className="mt-10 h-72 animate-pulse rounded-2xl bg-muted/40" />;
+  }
+
+  return (
+    <div className="mt-10">
+      <Carousel opts={{ align: "start", loop: true }} className="mx-auto max-w-6xl">
+        <CarouselContent className="-ml-4">
+          {items.map((item) => {
+            const e = EMOTIONS[item.emotion];
+            const v = e.variants[0];
+            return (
+              <CarouselItem key={item.id} className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3">
+                <article
+                  className="paper relative flex aspect-[7/5] flex-col justify-between rounded-2xl p-6 shadow-soft"
+                  style={{ background: v.bg, color: v.ink }}
+                >
+                  <p className="font-serif italic text-[11px] opacity-60">o que fica de Coimbra é</p>
+                  <p
+                    className={`my-4 line-clamp-4 text-base leading-snug ${v.fontCls}`}
+                    style={{ color: v.ink }}
+                  >
+                    {item.text}
+                  </p>
+                  <div className="flex items-end justify-between gap-2 text-[10px] opacity-70">
+                    <span className="font-mono-ui uppercase tracking-[0.18em]">{e.label}</span>
+                    {item.sender && <span className="italic">— {item.sender}</span>}
+                  </div>
+                </article>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+        <CarouselPrevious className="hidden md:flex" />
+        <CarouselNext className="hidden md:flex" />
+      </Carousel>
+    </div>
+  );
+};
+
