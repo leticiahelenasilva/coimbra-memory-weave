@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, ChevronDown, Mic } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Mic } from "lucide-react";
 import { Fog } from "../Fog";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
-import { EMOTIONS } from "@/data/emotions";
+import { EMOTIONS, type Variant } from "@/data/emotions";
 import { ScrollStack, ScrollStackItem } from "../ScrollStack";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { usePostcards } from "@/hooks/usePostcards";
+import { PixelCard } from "@/components/PixelCard";
 import postalImage from "../../../assets/postal.png";
 
 interface Props {
@@ -17,6 +18,88 @@ interface Props {
 }
 
 const TRIGGER = "o que fica de coimbra";
+const HIGHLIGHT_INK = "hsl(30 10% 12%)";
+
+const parseHsl = (color: string) => {
+  const match = color.match(/hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%/i);
+  if (!match) return null;
+
+  return {
+    h: Number(match[1]),
+    s: Number(match[2]),
+    l: Number(match[3]),
+  };
+};
+
+const hslToRgb = ({ h, s, l }: { h: number; s: number; l: number }) => {
+  const hue = (((h % 360) + 360) % 360) / 360;
+  const saturation = s / 100;
+  const lightness = l / 100;
+
+  if (saturation === 0) {
+    const value = Math.round(lightness * 255);
+    return { r: value, g: value, b: value };
+  }
+
+  const hueToRgb = (p: number, q: number, t: number) => {
+    let adjusted = t;
+    if (adjusted < 0) adjusted += 1;
+    if (adjusted > 1) adjusted -= 1;
+    if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
+    if (adjusted < 1 / 2) return q;
+    if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
+    return p;
+  };
+
+  const q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
+  const p = 2 * lightness - q;
+
+  return {
+    r: Math.round(hueToRgb(p, q, hue + 1 / 3) * 255),
+    g: Math.round(hueToRgb(p, q, hue) * 255),
+    b: Math.round(hueToRgb(p, q, hue - 1 / 3) * 255),
+  };
+};
+
+const relativeLuminance = ({ r, g, b }: { r: number; g: number; b: number }) => {
+  const channels = [r, g, b].map((channel) => {
+    const srgb = channel / 255;
+    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  });
+
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const formatHsl = ({ h, s, l }: { h: number; s: number; l: number }) =>
+  `hsl(${h} ${s}% ${l}%)`;
+
+const isDarkHsl = (color: string) => {
+  const hsl = parseHsl(color);
+  if (!hsl) return false;
+  return relativeLuminance(hslToRgb(hsl)) < 0.18;
+};
+
+const getEmotionPixelColors = (variant: Variant) => {
+  const accent = parseHsl(variant.accent);
+  const ink = parseHsl(variant.ink);
+  if (!accent) return variant.accent;
+
+  if (isDarkHsl(variant.bg)) {
+    return [
+      formatHsl({ ...accent, s: clamp(accent.s, 55, 100), l: clamp(accent.l + 16, 70, 88) }),
+      formatHsl({ ...accent, s: clamp(accent.s, 45, 100), l: clamp(accent.l + 26, 78, 94) }),
+      ink ? formatHsl({ ...ink, l: clamp(ink.l + 8, 76, 96) }) : formatHsl({ ...accent, l: 92 }),
+    ].join(",");
+  }
+
+  return [
+    variant.accent,
+    formatHsl({ ...accent, l: clamp(accent.l + 18, 64, 88) }),
+    ink ? variant.ink : formatHsl({ ...accent, l: clamp(accent.l - 18, 24, 48) }),
+  ].join(",");
+};
 
 export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
   // Mic auto-enabled on mount; user can still see status indicator in header.
@@ -51,15 +134,6 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
   }, [armed, transcript, interim, reset, onVoiceTrigger]);
 
 
-  // Build a long, repeated typographic marquee with emotion-driven styling
-  const marqueeItems = useMemo(() => {
-    return EMOTION_SEEDS.map((s) => {
-      const e = EMOTIONS[s.emotion];
-      const v = e.variants[0];
-      return { text: s.text, fontCls: v.fontCls, ink: v.ink, accent: v.accent, label: e.label };
-    });
-  }, []);
-
   const muralRef = useRef<HTMLDivElement>(null);
   const scrollToMural = () => muralRef.current?.scrollIntoView({ behavior: "smooth" });
 
@@ -67,23 +141,23 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
     <div className="relative min-h-screen w-full bg-background">
       {/* ============ TOP NAV ============ */}
       <header className="sticky top-0 z-40 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-10 py-6">
-          <a href="/" className="text-lg text-ink">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-6 py-5 md:flex-row md:px-10 md:py-6">
+          <a href="/" className="text-center text-lg text-ink md:text-left">
             O que fica de <span className="font-serif-display italic">Coimbra</span>
           </a>
-          <nav className="flex items-center gap-10">
-            <button onClick={onBegin} className="text-sm text-ink/80 transition-colors hover:text-ink">
+          <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-10">
+            <button onClick={onBegin} className="text-xs text-ink/80 transition-colors hover:text-ink md:text-sm">
               Postais
             </button>
-            <button onClick={scrollToMural} className="text-sm text-ink/80 transition-colors hover:text-ink">
+            <button onClick={scrollToMural} className="text-xs text-ink/80 transition-colors hover:text-ink md:text-sm">
               Mural de memórias
             </button>
-            <button className="text-sm text-ink/80 transition-colors hover:text-ink">
+            <button className="text-xs text-ink/80 transition-colors hover:text-ink md:text-sm">
               Sobre o projeto
             </button>
             <button
               onClick={() => { reset(); setArmed(true); }}
-              className="inline-flex items-center gap-2 rounded-full bg-yellow px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-yellow/90"
+              className="inline-flex items-center gap-2 rounded-full bg-yellow px-4 py-2 text-xs font-medium text-ink transition-colors hover:bg-yellow/90 md:px-5 md:py-2.5 md:text-sm"
               title={listening ? "à escuta" : "ativar microfone"}
             >
               {listening ? "à escuta…" : "Fale o que fica de Coimbra"}
@@ -133,55 +207,24 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
         </div>
       </section>
 
-      {/* ============ MARQUEE OF MEMORIES ============ */}
-      <section ref={muralRef} className="relative overflow-hidden border-y border-border/60 bg-gradient-to-b from-background to-muted/30 py-12">
-        {[0, 1, 2].map((row) => (
-          <div key={row} className="mb-6 flex w-full overflow-hidden last:mb-0" style={{ ['--marquee-dur' as string]: `${50 + row * 14}s` }}>
-            <div className={`flex shrink-0 items-center gap-12 whitespace-nowrap px-6 ${row % 2 === 1 ? "" : "animate-marquee"}`} style={row % 2 === 1 ? { animation: `marquee ${64}s linear infinite reverse` } : undefined}>
-              {[...marqueeItems, ...marqueeItems].map((m, i) => (
-                <span
-                  key={`${row}-${i}`}
-                  className={`${m.fontCls} text-[clamp(1.4rem,2.6vw,2.4rem)]`}
-                  style={{ color: m.ink }}
-                  title={m.label}
-                >
-                  <span style={{ background: `linear-gradient(180deg, transparent 60%, ${m.accent}55 60%)`, padding: "0 0.08em" }}>
-                    {m.text}
-                  </span>
-                  <span className="mx-6 text-ink/30">/</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+      {/* ============ POSTCARDS CAROUSEL ============ */}
+      <section ref={muralRef} className="relative overflow-hidden bg-background px-6 pb-20 pt-2">
+        <PostcardsCarousel />
+
+        <div className="mt-12 flex justify-center">
+          <Button
+            onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
+            size="lg"
+            className="h-12 rounded-full bg-yellow px-7 text-ink hover:bg-yellow/90"
+          >
+            Fale o que fica de Coimbra
+            <Mic className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </section>
 
-      {/* ============ STACKED CARDS (postcards preview + about) ============ */}
+      {/* ============ STACKED CARD (about) ============ */}
       <ScrollStack className="bg-muted/30">
-        <ScrollStackItem>
-          <section className="relative overflow-hidden rounded-3xl bg-card px-6 py-16 shadow-soft">
-            <div className="mx-auto max-w-5xl text-center">
-              <p className="font-serif text-sm text-muted-foreground">
-                Recolha cartões postais únicos como recordação de
-                <span className="block font-medium italic text-ink">O que fica de Coimbra</span>
-              </p>
-            </div>
-
-            <PostcardsCarousel />
-
-            <div className="mt-12 flex justify-center">
-              <Button
-                onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
-                size="lg"
-                className="h-12 rounded-full bg-yellow px-7 text-ink hover:bg-yellow/90"
-              >
-                Fale o que fica de Coimbra
-                <Mic className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </section>
-        </ScrollStackItem>
-
         <ScrollStackItem>
           <section className="rounded-3xl bg-card px-6 py-16 shadow-soft">
             <div className="mx-auto max-w-3xl p-6">
@@ -241,6 +284,9 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
 // ============ POSTCARDS CAROUSEL ============
 const PostcardsCarousel = () => {
   const { postcards, loading } = usePostcards();
+  const [api, setApi] = useState<CarouselApi>();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [shortActiveIndex, setShortActiveIndex] = useState(0);
 
   // Fallback to seeds when no approved postcards yet
   const items = useMemo(() => {
@@ -262,43 +308,148 @@ const PostcardsCarousel = () => {
     }));
   }, [postcards]);
 
+  const isShortPostcardList = postcards.length > 0 && items.length <= 2;
+
+  const displayItems = useMemo(() => items.map((item) => ({ ...item, renderId: item.id })), [items]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    const updateActiveIndex = () => setActiveIndex(api.selectedScrollSnap());
+
+    updateActiveIndex();
+    api.on("select", updateActiveIndex);
+    api.on("reInit", updateActiveIndex);
+
+    return () => {
+      api.off("select", updateActiveIndex);
+      api.off("reInit", updateActiveIndex);
+    };
+  }, [api]);
+
+  useEffect(() => {
+    setShortActiveIndex(0);
+  }, [items.length]);
+
   if (loading && postcards.length === 0) {
-    return <div className="mt-10 h-72 animate-pulse rounded-2xl bg-muted/40" />;
+    return <div className="mx-auto h-[260px] w-full max-w-6xl animate-pulse rounded-[15px] bg-muted/40 md:h-[320px]" />;
+  }
+
+  const renderPostcard = (item: (typeof items)[number]) => {
+    const e = EMOTIONS[item.emotion];
+    const v = e.variants[0];
+    const pixelColors = getEmotionPixelColors(v);
+    const isDarkPostcard = isDarkHsl(v.bg);
+    const sender = item.sender?.trim() || "anónimo";
+
+    return (
+      <PixelCard
+        colors={pixelColors}
+        gap={isDarkPostcard ? 6 : 10}
+        speed={isDarkPostcard ? 35 : 25}
+        maxPixelSize={isDarkPostcard ? 3.5 : 2}
+        noFocus
+        className="aspect-[2/1] rounded-[15px] drop-shadow-[0_1px_2px_rgba(12,12,13,0.05)]"
+      >
+        <article
+          className="relative z-[3] flex h-full w-full flex-col justify-between overflow-hidden rounded-[15px] bg-gradient-to-b from-white to-[#f6f6f6] px-6 py-8 md:py-10"
+          style={{ color: v.ink }}
+        >
+          <p className="font-serif italic text-[clamp(0.8rem,1.5vw,1.5rem)] leading-none text-muted-foreground">
+            O que fica de Coimbra é
+          </p>
+          <p
+            className={`line-clamp-3 min-w-full break-words text-[clamp(1.4rem,3.1vw,2.25rem)] leading-none ${v.fontCls}`}
+            style={{ color: v.accent }}
+          >
+            {item.text}
+          </p>
+          <div className="flex w-full items-center justify-between gap-4">
+            <span
+              className="inline-flex shrink-0 items-center justify-center rounded-full px-3 py-2 text-sm leading-none"
+              style={{ background: v.accent, color: HIGHLIGHT_INK }}
+            >
+              {e.label}
+            </span>
+            <span className="truncate text-right text-base leading-none text-muted-foreground">
+              &mdash; {sender}
+            </span>
+          </div>
+        </article>
+      </PixelCard>
+    );
+  };
+
+  if (isShortPostcardList) {
+    const getItemAtOffset = (offset: number) => {
+      const nextIndex = (shortActiveIndex + offset + items.length) % items.length;
+      return items[nextIndex];
+    };
+
+    const navigateShortList = (direction: 1 | -1) => {
+      if (items.length < 2) return;
+      setShortActiveIndex((current) => (current + direction + items.length) % items.length);
+    };
+
+    return (
+      <div className="relative mx-auto max-w-6xl overflow-hidden">
+        <div className="flex items-center justify-center gap-5">
+          {([-1, 0, 1] as const).map((offset) => (
+            <div
+              key={`${getItemAtOffset(offset).id}-${offset}-${shortActiveIndex}`}
+              className={`shrink-0 basis-[78%] md:basis-[60%] lg:basis-[56%] ${
+                offset === 0 ? "scale-100 opacity-100" : "scale-[0.92] opacity-70"
+              }`}
+            >
+              {renderPostcard(getItemAtOffset(offset))}
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => navigateShortList(-1)}
+          className="absolute left-2 top-1/2 z-10 h-8 w-8 -translate-y-1/2 rounded-full border-ink/10 bg-card/90 shadow-soft backdrop-blur md:left-0"
+          aria-label="Postal anterior"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => navigateShortList(1)}
+          className="absolute right-2 top-1/2 z-10 h-8 w-8 -translate-y-1/2 rounded-full border-ink/10 bg-card/90 shadow-soft backdrop-blur md:right-0"
+          aria-label="Postal seguinte"
+        >
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="mt-10">
-      <Carousel opts={{ align: "start", loop: true }} className="mx-auto max-w-6xl">
-        <CarouselContent className="-ml-4">
-          {items.map((item) => {
-            const e = EMOTIONS[item.emotion];
-            const v = e.variants[0];
+    <div>
+      <Carousel setApi={setApi} opts={{ align: "center", loop: true }} className="mx-auto max-w-6xl">
+        <CarouselContent className="-ml-5">
+          {displayItems.map((item, index) => {
+            const isActive = index === activeIndex;
             return (
-              <CarouselItem key={item.id} className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3">
-                <article
-                  className="paper relative flex aspect-[7/5] flex-col justify-between rounded-2xl p-6 shadow-soft"
-                  style={{ background: v.bg, color: v.ink }}
-                >
-                  <p className="font-serif italic text-[11px] opacity-60">o que fica de Coimbra é</p>
-                  <p
-                    className={`my-4 line-clamp-4 text-base leading-snug ${v.fontCls}`}
-                    style={{ color: v.ink }}
-                  >
-                    {item.text}
-                  </p>
-                  <div className="flex items-end justify-between gap-2 text-[10px] opacity-70">
-                    <span className="font-mono-ui uppercase tracking-[0.18em]">{e.label}</span>
-                    {item.sender && <span className="italic">— {item.sender}</span>}
-                  </div>
-                </article>
+              <CarouselItem
+                key={item.renderId}
+                className={`basis-[78%] pl-5 transition-[opacity,transform] duration-500 ease-out md:basis-[60%] lg:basis-[56%] ${
+                  isActive ? "scale-100 opacity-100" : "scale-[0.92] opacity-70"
+                }`}
+              >
+                {renderPostcard(item)}
               </CarouselItem>
             );
           })}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex" />
-        <CarouselNext className="hidden md:flex" />
+        <CarouselPrevious className="left-2 z-10 flex border-ink/10 bg-card/90 shadow-soft backdrop-blur md:-left-12" />
+        <CarouselNext className="right-2 z-10 flex border-ink/10 bg-card/90 shadow-soft backdrop-blur md:-right-12" />
       </Carousel>
     </div>
   );
 };
-
