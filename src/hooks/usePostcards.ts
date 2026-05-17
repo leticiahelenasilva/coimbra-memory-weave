@@ -6,6 +6,7 @@ export interface PublicPostcard {
   id: string;
   memory: string;
   emotion: EmotionKey;
+  variant_idx: number;
   sender: string | null;
   recipient: string | null;
   featured: boolean;

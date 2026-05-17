@@ -8,7 +8,8 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
 import { detectEmotion, EMOTIONS, EmotionKey, Variant } from "@/data/emotions";
-import { PixelCard } from "@/components/PixelCard";
+import { PostcardFront } from "@/components/PostcardFront";
+import { HIGHLIGHT_INK, hslToRgb, parseHsl, relativeLuminance } from "@/lib/postcardStyle";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -27,61 +28,8 @@ interface Props {
   initialEmotion?: EmotionKey;
 }
 
-// High-contrast text color for the accent-colored highlight block (WCAG AA).
-// All accents in EMOTIONS are bright (lightness 45-80%), so dark NIGHT works universally.
-const HIGHLIGHT_INK = "hsl(30 10% 12%)";
 const WHITE_RGB = { r: 255, g: 255, b: 255 };
 const AA_CONTRAST_RATIO = 4.5;
-
-const parseHsl = (color: string) => {
-  const match = color.match(/hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%/i);
-  if (!match) return null;
-
-  return {
-    h: Number(match[1]),
-    s: Number(match[2]),
-    l: Number(match[3]),
-  };
-};
-
-const hslToRgb = ({ h, s, l }: { h: number; s: number; l: number }) => {
-  const hue = (((h % 360) + 360) % 360) / 360;
-  const saturation = s / 100;
-  const lightness = l / 100;
-
-  if (saturation === 0) {
-    const value = Math.round(lightness * 255);
-    return { r: value, g: value, b: value };
-  }
-
-  const hueToRgb = (p: number, q: number, t: number) => {
-    let adjusted = t;
-    if (adjusted < 0) adjusted += 1;
-    if (adjusted > 1) adjusted -= 1;
-    if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
-    if (adjusted < 1 / 2) return q;
-    if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
-    return p;
-  };
-
-  const q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
-  const p = 2 * lightness - q;
-
-  return {
-    r: Math.round(hueToRgb(p, q, hue + 1 / 3) * 255),
-    g: Math.round(hueToRgb(p, q, hue) * 255),
-    b: Math.round(hueToRgb(p, q, hue - 1 / 3) * 255),
-  };
-};
-
-const relativeLuminance = ({ r, g, b }: { r: number; g: number; b: number }) => {
-  const channels = [r, g, b].map((channel) => {
-    const srgb = channel / 255;
-    return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
-  });
-
-  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-};
 
 const contrastRatio = (a: { r: number; g: number; b: number }, b: { r: number; g: number; b: number }) => {
   const lighter = Math.max(relativeLuminance(a), relativeLuminance(b));
@@ -107,37 +55,6 @@ const getAaTextColorOnWhite = (accent: string) => {
   return HIGHLIGHT_INK;
 };
 
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
-const formatHsl = ({ h, s, l }: { h: number; s: number; l: number }) =>
-  `hsl(${h} ${s}% ${l}%)`;
-
-const isDarkHsl = (color: string) => {
-  const hsl = parseHsl(color);
-  if (!hsl) return false;
-  return relativeLuminance(hslToRgb(hsl)) < 0.18;
-};
-
-const getEmotionPixelColors = (variant: Variant) => {
-  const accent = parseHsl(variant.accent);
-  const ink = parseHsl(variant.ink);
-  if (!accent) return variant.accent;
-
-  if (isDarkHsl(variant.bg)) {
-    return [
-      formatHsl({ ...accent, s: clamp(accent.s, 55, 100), l: clamp(accent.l + 16, 70, 88) }),
-      formatHsl({ ...accent, s: clamp(accent.s, 45, 100), l: clamp(accent.l + 26, 78, 94) }),
-      ink ? formatHsl({ ...ink, l: clamp(ink.l + 8, 76, 96) }) : formatHsl({ ...accent, l: 92 }),
-    ].join(",");
-  }
-
-  return [
-    variant.accent,
-    formatHsl({ ...accent, l: clamp(accent.l + 18, 64, 88) }),
-    ink ? variant.ink : formatHsl({ ...accent, l: clamp(accent.l - 18, 24, 48) }),
-  ].join(",");
-};
-
 export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   const initialClean = useMemo(() => cleanMemory(memory), [memory]);
   const [editedMemory, setEditedMemory] = useState(initialClean);
@@ -158,9 +75,7 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
   const postcardRef = useRef<HTMLDivElement>(null);
 
   const variant: Variant = variants[variantIdx];
-  const isDarkPostcard = useMemo(() => isDarkHsl(variant.bg), [variant.bg]);
   const emotionTextColor = useMemo(() => getAaTextColorOnWhite(variant.accent), [variant.accent]);
-  const emotionPixelColors = useMemo(() => getEmotionPixelColors(variant), [variant]);
 
   // Emotion is locked from Analyzing step — no auto re-detection here.
 
@@ -211,6 +126,8 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
           memory: cleanedMemory,
           sender: sender && sender !== "anónimo" ? sender : null,
           recipient: destination && destination !== "quem ler depois de mim" ? destination : null,
+          emotion: emotionKey,
+          variant_idx: variantIdx,
         },
       })
       .catch((e) => console.error("[Editor] submit-postcard failed", e));
@@ -292,74 +209,22 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
               >
                 <div className="flip-inner">
                   {/* FRONT */}
-                  <PixelCard
-                    colors={emotionPixelColors}
-                    gap={isDarkPostcard ? 6 : 10}
-                    speed={isDarkPostcard ? 35 : 25}
-                    maxPixelSize={isDarkPostcard ? 3.5 : 2}
-                    noFocus
+                  <PostcardFront
+                    memory={cleanedMemory}
+                    emotionLabel={emotion.label}
+                    variant={variant}
+                    editable={!flying}
+                    showEditHint
+                    postcardRef={postcardRef}
+                    onMemoryChange={(nextMemory) => setEditedMemory(nextMemory)}
+                    onMemoryKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        (e.target as HTMLElement).blur();
+                      }
+                    }}
                     className="flip-face rounded-[2rem]"
-                  >
-                  <div
-                    ref={postcardRef}
-                    className="relative h-full w-full overflow-hidden rounded-[2rem]"
-                    style={{ color: variant.ink }}
-                  >
-                    <div
-                      className="paper absolute inset-0 z-0 rounded-[2rem]"
-                      style={{ background: variant.bg }}
-                    />
-                    <div className="relative z-[3] h-full w-full p-10">
-                      <div className="flex items-start justify-between">
-                        <div className="font-mono-ui text-[10px] uppercase tracking-[0.25em] opacity-70">
-                          postal · coimbra · {emotion.label}
-                        </div>
-                        <div
-                          className="grid h-14 w-14 rotate-6 place-items-center rounded-md font-mono-ui text-[10px] uppercase tracking-widest"
-                          style={{ background: variant.accent, color: HIGHLIGHT_INK }}
-                        >
-                          pt'26
-                        </div>
-                      </div>
-
-                      <div className="mt-8 grid h-[70%] grid-cols-12 gap-6">
-                        <div className="col-span-12">
-                          <p className={`${variant.fontCls} text-balance leading-[1.05]`} style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}>
-                            <span style={{ opacity: 0.6 }}>o que fica de Coimbra é</span>{" "}
-                            <span
-                              contentEditable={!flying}
-                              suppressContentEditableWarning
-                              onBlur={(e) => setEditedMemory(e.currentTarget.textContent?.trim() || "")}
-                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } }}
-                              spellCheck={false}
-                              className="relative z-[4] rounded-sm backdrop-blur-xl outline-none focus:ring-2 focus:ring-offset-2"
-                              style={{
-                                background: variant.accent,
-                                padding: "0 0.15em",
-                                color: HIGHLIGHT_INK,
-                                boxDecorationBreak: "clone",
-                                WebkitBoxDecorationBreak: "clone",
-                                minWidth: "1ch",
-                              } as React.CSSProperties}
-                            >
-                              {cleanedMemory}
-                            </span>
-                            <span style={{ color: variant.accent }}>.</span>
-                          </p>
-                          <p className="mt-3 font-mono-ui text-[10px] uppercase tracking-[0.2em]" style={{ opacity: 0.5 }}>
-                            ✎ clica no texto para editar
-                          </p>
-                        </div>
-                      </div>
-
-
-                      <div className="absolute inset-x-10 bottom-8 flex items-end justify-between font-mono-ui text-[10px] uppercase tracking-[0.22em]" style={{ opacity: 0.6 }}>
-                        <span>{variant.name}</span>
-                        <span>{variant.fontLabel}</span>
-                      </div>
-                    </div>
-                  </div>
-                  </PixelCard>
+                  />
 
                   {/* BACK */}
                   <div

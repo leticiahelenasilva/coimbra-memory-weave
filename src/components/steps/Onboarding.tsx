@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, ChevronDown, Mic } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, ChevronDown, Mic } from "lucide-react";
 import { Fog } from "../Fog";
 import { Button } from "@/components/ui/button";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
 import { EMOTIONS } from "@/data/emotions";
 import { ScrollStack, ScrollStackItem } from "../ScrollStack";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { usePostcards } from "@/hooks/usePostcards";
+import { PostcardFront } from "@/components/PostcardFront";
+import { Stack, type StackHandle } from "@/components/Stack";
 import postalImage from "../../../assets/postal.png";
 
 interface Props {
@@ -17,6 +18,10 @@ interface Props {
 }
 
 const TRIGGER = "o que fica de coimbra";
+const getVariantIndex = (value: unknown) => {
+  if (typeof value !== "number" || !Number.isInteger(value)) return 0;
+  return value >= 0 && value <= 2 ? value : 0;
+};
 
 export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
   // Mic auto-enabled on mount; user can still see status indicator in header.
@@ -51,15 +56,6 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
   }, [armed, transcript, interim, reset, onVoiceTrigger]);
 
 
-  // Build a long, repeated typographic marquee with emotion-driven styling
-  const marqueeItems = useMemo(() => {
-    return EMOTION_SEEDS.map((s) => {
-      const e = EMOTIONS[s.emotion];
-      const v = e.variants[0];
-      return { text: s.text, fontCls: v.fontCls, ink: v.ink, accent: v.accent, label: e.label };
-    });
-  }, []);
-
   const muralRef = useRef<HTMLDivElement>(null);
   const scrollToMural = () => muralRef.current?.scrollIntoView({ behavior: "smooth" });
 
@@ -67,23 +63,23 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
     <div className="relative min-h-screen w-full bg-background">
       {/* ============ TOP NAV ============ */}
       <header className="sticky top-0 z-40 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-10 py-6">
-          <a href="/" className="text-lg text-ink">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-6 py-5 md:flex-row md:px-10 md:py-6">
+          <a href="/" className="text-center text-lg text-ink md:text-left">
             O que fica de <span className="font-serif-display italic">Coimbra</span>
           </a>
-          <nav className="flex items-center gap-10">
-            <button onClick={onBegin} className="text-sm text-ink/80 transition-colors hover:text-ink">
+          <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-10">
+            <button onClick={onBegin} className="text-xs text-ink/80 transition-colors hover:text-ink md:text-sm">
               Postais
             </button>
-            <button onClick={scrollToMural} className="text-sm text-ink/80 transition-colors hover:text-ink">
+            <button onClick={scrollToMural} className="text-xs text-ink/80 transition-colors hover:text-ink md:text-sm">
               Mural de memórias
             </button>
-            <button className="text-sm text-ink/80 transition-colors hover:text-ink">
+            <button className="text-xs text-ink/80 transition-colors hover:text-ink md:text-sm">
               Sobre o projeto
             </button>
             <button
               onClick={() => { reset(); setArmed(true); }}
-              className="inline-flex items-center gap-2 rounded-full bg-yellow px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-yellow/90"
+              className="inline-flex items-center gap-2 rounded-full bg-yellow px-4 py-2 text-xs font-medium text-ink transition-colors hover:bg-yellow/90 md:px-5 md:py-2.5 md:text-sm"
               title={listening ? "à escuta" : "ativar microfone"}
             >
               {listening ? "à escuta…" : "Fale o que fica de Coimbra"}
@@ -133,55 +129,24 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
         </div>
       </section>
 
-      {/* ============ MARQUEE OF MEMORIES ============ */}
-      <section ref={muralRef} className="relative overflow-hidden border-y border-border/60 bg-gradient-to-b from-background to-muted/30 py-12">
-        {[0, 1, 2].map((row) => (
-          <div key={row} className="mb-6 flex w-full overflow-hidden last:mb-0" style={{ ['--marquee-dur' as string]: `${50 + row * 14}s` }}>
-            <div className={`flex shrink-0 items-center gap-12 whitespace-nowrap px-6 ${row % 2 === 1 ? "" : "animate-marquee"}`} style={row % 2 === 1 ? { animation: `marquee ${64}s linear infinite reverse` } : undefined}>
-              {[...marqueeItems, ...marqueeItems].map((m, i) => (
-                <span
-                  key={`${row}-${i}`}
-                  className={`${m.fontCls} text-[clamp(1.4rem,2.6vw,2.4rem)]`}
-                  style={{ color: m.ink }}
-                  title={m.label}
-                >
-                  <span style={{ background: `linear-gradient(180deg, transparent 60%, ${m.accent}55 60%)`, padding: "0 0.08em" }}>
-                    {m.text}
-                  </span>
-                  <span className="mx-6 text-ink/30">/</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+      {/* ============ POSTCARDS STACK ============ */}
+      <section ref={muralRef} className="relative overflow-hidden bg-background px-6 pb-20 pt-2">
+        <PostcardsStack />
+
+        <div className="mt-12 flex justify-center">
+          <Button
+            onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
+            size="lg"
+            className="h-12 rounded-full bg-yellow px-7 text-ink hover:bg-yellow/90"
+          >
+            Fale o que fica de Coimbra
+            <Mic className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </section>
 
-      {/* ============ STACKED CARDS (postcards preview + about) ============ */}
+      {/* ============ STACKED CARD (about) ============ */}
       <ScrollStack className="bg-muted/30">
-        <ScrollStackItem>
-          <section className="relative overflow-hidden rounded-3xl bg-card px-6 py-16 shadow-soft">
-            <div className="mx-auto max-w-5xl text-center">
-              <p className="font-serif text-sm text-muted-foreground">
-                Recolha cartões postais únicos como recordação de
-                <span className="block font-medium italic text-ink">O que fica de Coimbra</span>
-              </p>
-            </div>
-
-            <PostcardsCarousel />
-
-            <div className="mt-12 flex justify-center">
-              <Button
-                onClick={() => { if (!armed) { reset(); setArmed(true); } onBegin(); }}
-                size="lg"
-                className="h-12 rounded-full bg-yellow px-7 text-ink hover:bg-yellow/90"
-              >
-                Fale o que fica de Coimbra
-                <Mic className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </section>
-        </ScrollStackItem>
-
         <ScrollStackItem>
           <section className="rounded-3xl bg-card px-6 py-16 shadow-soft">
             <div className="mx-auto max-w-3xl p-6">
@@ -238,9 +203,10 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
   );
 };
 
-// ============ POSTCARDS CAROUSEL ============
-const PostcardsCarousel = () => {
+// ============ POSTCARDS STACK ============
+const PostcardsStack = () => {
   const { postcards, loading } = usePostcards();
+  const stackRef = useRef<StackHandle>(null);
 
   // Fallback to seeds when no approved postcards yet
   const items = useMemo(() => {
@@ -249,6 +215,7 @@ const PostcardsCarousel = () => {
         id: p.id,
         text: p.memory,
         emotion: p.emotion,
+        variantIdx: getVariantIndex(p.variant_idx),
         sender: p.sender,
         recipient: p.recipient,
       }));
@@ -257,48 +224,78 @@ const PostcardsCarousel = () => {
       id: `seed-${i}`,
       text: s.text,
       emotion: s.emotion,
+      variantIdx: 0,
       sender: null as string | null,
       recipient: null as string | null,
     }));
   }, [postcards]);
 
+  const renderPostcard = useCallback((item: (typeof items)[number]) => {
+    const e = EMOTIONS[item.emotion];
+    const v = e.variants[item.variantIdx] ?? e.variants[0];
+
+    return (
+      <PostcardFront
+        memory={item.text}
+        emotionLabel={e.label}
+        variant={v}
+        className="aspect-[2/1] rounded-[15px] drop-shadow-[0_1px_2px_rgba(12,12,13,0.05)]"
+        radiusClassName="rounded-[15px]"
+        contentClassName="px-6 py-8 md:p-10"
+      />
+    );
+  }, []);
+
+  const stackCards = useMemo(() => items.map((item) => renderPostcard(item)), [items, renderPostcard]);
+  const canNavigate = items.length > 1;
+  const showNavigation = items.length > 0;
+
   if (loading && postcards.length === 0) {
-    return <div className="mt-10 h-72 animate-pulse rounded-2xl bg-muted/40" />;
+    return <div className="mx-auto h-[260px] w-full max-w-6xl animate-pulse rounded-[15px] bg-muted/40 md:h-[320px]" />;
   }
 
   return (
-    <div className="mt-10">
-      <Carousel opts={{ align: "start", loop: true }} className="mx-auto max-w-6xl">
-        <CarouselContent className="-ml-4">
-          {items.map((item) => {
-            const e = EMOTIONS[item.emotion];
-            const v = e.variants[0];
-            return (
-              <CarouselItem key={item.id} className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3">
-                <article
-                  className="paper relative flex aspect-[7/5] flex-col justify-between rounded-2xl p-6 shadow-soft"
-                  style={{ background: v.bg, color: v.ink }}
-                >
-                  <p className="font-serif italic text-[11px] opacity-60">o que fica de Coimbra é</p>
-                  <p
-                    className={`my-4 line-clamp-4 text-base leading-snug ${v.fontCls}`}
-                    style={{ color: v.ink }}
-                  >
-                    {item.text}
-                  </p>
-                  <div className="flex items-end justify-between gap-2 text-[10px] opacity-70">
-                    <span className="font-mono-ui uppercase tracking-[0.18em]">{e.label}</span>
-                    {item.sender && <span className="italic">— {item.sender}</span>}
-                  </div>
-                </article>
-              </CarouselItem>
-            );
-          })}
-        </CarouselContent>
-        <CarouselPrevious className="hidden md:flex" />
-        <CarouselNext className="hidden md:flex" />
-      </Carousel>
+    <div className="relative mx-auto flex w-full max-w-6xl justify-center overflow-visible px-8 md:px-14">
+      <div className="relative aspect-[2/1] w-full max-w-[1024px]">
+        <Stack
+          ref={stackRef}
+          randomRotation
+          sensitivity={180}
+          sendToBackOnClick
+          mobileClickOnly
+          autoplay
+          autoplayDelay={3000}
+          pauseOnHover
+          cards={stackCards}
+          animationConfig={{ stiffness: 260, damping: 22 }}
+        />
+      </div>
+      {showNavigation && (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={!canNavigate}
+            onClick={() => canNavigate && stackRef.current?.previous()}
+            className="absolute left-3 top-1/2 z-30 h-11 w-11 -translate-y-1/2 rounded-full border-ink/10 bg-card text-ink shadow-[0_2px_12px_rgba(32,27,22,0.14)] backdrop-blur hover:bg-card md:left-6"
+            aria-label="Postal anterior"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={!canNavigate}
+            onClick={() => canNavigate && stackRef.current?.next()}
+            className="absolute right-3 top-1/2 z-30 h-11 w-11 -translate-y-1/2 rounded-full border-ink/10 bg-card text-ink shadow-[0_2px_12px_rgba(32,27,22,0.14)] backdrop-blur hover:bg-card md:right-6"
+            aria-label="Postal seguinte"
+          >
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        </>
+      )}
     </div>
   );
 };
-

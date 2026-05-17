@@ -68,6 +68,10 @@ Deno.serve(async (req) => {
     const memory = typeof body?.memory === "string" ? body.memory.trim() : "";
     const sender = typeof body?.sender === "string" ? body.sender.trim().slice(0, 80) : null;
     const recipient = typeof body?.recipient === "string" ? body.recipient.trim().slice(0, 80) : null;
+    const clientEmotion = (EMOTIONS as readonly string[]).includes(body?.emotion) ? body.emotion as typeof EMOTIONS[number] : null;
+    const variantIdx = Number.isInteger(body?.variant_idx) && body.variant_idx >= 0 && body.variant_idx <= 2
+      ? body.variant_idx
+      : 0;
 
     if (!memory || memory.length < 1 || memory.length > 600) {
       return new Response(JSON.stringify({ error: "invalid memory" }), {
@@ -100,9 +104,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Classify
-    let classified: ClassifyResult = { emotion: "saudade", confidence: 0.5, language: "pt" };
-    if (lovableKey) {
+    // Classify only when old clients do not send the emotion selected in the editor.
+    let classified: ClassifyResult = { emotion: clientEmotion ?? "saudade", confidence: clientEmotion ? 1 : 0.5, language: "pt" };
+    if (!clientEmotion && lovableKey) {
       try { classified = await classify(memory, lovableKey); }
       catch (e) { console.error("[submit-postcard] classify failed", e); }
     }
@@ -113,7 +117,8 @@ Deno.serve(async (req) => {
         memory,
         sender: sender || null,
         recipient: recipient || null,
-        emotion: classified.emotion,
+        emotion: clientEmotion ?? classified.emotion,
+        variant_idx: variantIdx,
         confidence: classified.confidence,
         language: classified.language,
         ip_hash: ipHash,
