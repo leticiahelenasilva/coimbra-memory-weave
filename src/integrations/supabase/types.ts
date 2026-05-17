@@ -14,10 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      postcards: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          emotion: string
+          featured: boolean
+          id: string
+          ip_hash: string | null
+          language: string | null
+          memory: string
+          recipient: string | null
+          sender: string | null
+          status: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          emotion: string
+          featured?: boolean
+          id?: string
+          ip_hash?: string | null
+          language?: string | null
+          memory: string
+          recipient?: string | null
+          sender?: string | null
+          status?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          emotion?: string
+          featured?: boolean
+          id?: string
+          ip_hash?: string | null
+          language?: string | null
+          memory?: string
+          recipient?: string | null
+          sender?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      public_postcards: {
+        Row: {
+          created_at: string | null
+          emotion: string | null
+          featured: boolean | null
+          id: string | null
+          memory: string | null
+          recipient: string | null
+          sender: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          emotion?: string | null
+          featured?: boolean | null
+          id?: string | null
+          memory?: string | null
+          recipient?: string | null
+          sender?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          emotion?: string | null
+          featured?: boolean | null
+          id?: string | null
+          memory?: string | null
+          recipient?: string | null
+          sender?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
