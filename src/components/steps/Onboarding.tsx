@@ -7,6 +7,8 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
 import { EMOTIONS } from "@/data/emotions";
 import { ScrollStack, ScrollStackItem } from "../ScrollStack";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { usePostcards } from "@/hooks/usePostcards";
 import postalImage from "../../../assets/postal.png";
 
 interface Props {
