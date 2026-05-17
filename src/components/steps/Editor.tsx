@@ -9,6 +9,7 @@ import { useHandSwipe } from "@/hooks/useHandSwipe";
 import { toast } from "sonner";
 import { detectEmotion, EMOTIONS, EmotionKey, Variant } from "@/data/emotions";
 import { PixelCard } from "@/components/PixelCard";
+import { supabase } from "@/integrations/supabase/client";
 
 
 // Strip the trigger phrase if it leaked into the captured memory
