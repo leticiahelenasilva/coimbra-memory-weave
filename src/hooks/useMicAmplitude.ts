@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 interface AudioWindow extends Window {
+  AudioContext?: typeof AudioContext;
   webkitAudioContext?: typeof AudioContext;
 }
 
