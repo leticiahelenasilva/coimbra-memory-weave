@@ -46,6 +46,9 @@ O projeto é uma aplicação frontend em React + TypeScript com Vite, Tailwind C
 │   │   ├── PixelCard.css
 │   │   ├── PixelCard.tsx
 │   │   ├── ScrollStack.tsx
+│   │   ├── Stack.css
+│   │   ├── Stack.test.tsx
+│   │   ├── Stack.tsx
 │   │   ├── Stamp.tsx
 │   │   ├── steps/
 │   │   │   ├── Analyzing.tsx
@@ -94,7 +97,7 @@ O projeto é uma aplicação frontend em React + TypeScript com Vite, Tailwind C
 
 `src/components/steps/` contém telas de fluxo com responsabilidade de produto: `Onboarding`, `MemoryMural`, `Recording`, `Analyzing`, `Editor` e `Sent`. Novas etapas do fluxo devem entrar aqui. O `Onboarding` usa `assets/postal.png` como imagem principal do postal animado.
 
-`src/components/` contém componentes reutilizáveis de experiência visual e navegação, como névoa, selos, stack de scroll, cartões pixelados e efeitos WebGL.
+`src/components/` contém componentes reutilizáveis de experiência visual e navegação, como névoa, selos, stack de scroll, stack interativo de postais, cartões pixelados e efeitos WebGL.
 
 `src/components/ui/` contém componentes base shadcn/ui. Esses arquivos devem continuar genéricos, reaproveitáveis e sem regras específicas do memorial, exceto ajustes visuais compatíveis com o design system.
 

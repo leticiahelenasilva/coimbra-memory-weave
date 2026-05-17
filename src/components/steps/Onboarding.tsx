@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ChevronDown, Mic } from "lucide-react";
 import { Fog } from "../Fog";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,9 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { EMOTION_SEEDS } from "@/data/memories";
 import { EMOTIONS, type Variant } from "@/data/emotions";
 import { ScrollStack, ScrollStackItem } from "../ScrollStack";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { usePostcards } from "@/hooks/usePostcards";
 import { PixelCard } from "@/components/PixelCard";
+import { Stack, type StackHandle } from "@/components/Stack";
 import postalImage from "../../../assets/postal.png";
 
 interface Props {
@@ -207,9 +207,9 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
         </div>
       </section>
 
-      {/* ============ POSTCARDS CAROUSEL ============ */}
+      {/* ============ POSTCARDS STACK ============ */}
       <section ref={muralRef} className="relative overflow-hidden bg-background px-6 pb-20 pt-2">
-        <PostcardsCarousel />
+        <PostcardsStack />
 
         <div className="mt-12 flex justify-center">
           <Button
@@ -281,12 +281,10 @@ export const Onboarding = ({ onBegin, onVoiceTrigger }: Props) => {
   );
 };
 
-// ============ POSTCARDS CAROUSEL ============
-const PostcardsCarousel = () => {
+// ============ POSTCARDS STACK ============
+const PostcardsStack = () => {
   const { postcards, loading } = usePostcards();
-  const [api, setApi] = useState<CarouselApi>();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [shortActiveIndex, setShortActiveIndex] = useState(0);
+  const stackRef = useRef<StackHandle>(null);
 
   // Fallback to seeds when no approved postcards yet
   const items = useMemo(() => {
@@ -308,34 +306,7 @@ const PostcardsCarousel = () => {
     }));
   }, [postcards]);
 
-  const isShortPostcardList = postcards.length > 0 && items.length <= 2;
-
-  const displayItems = useMemo(() => items.map((item) => ({ ...item, renderId: item.id })), [items]);
-
-  useEffect(() => {
-    if (!api) return;
-
-    const updateActiveIndex = () => setActiveIndex(api.selectedScrollSnap());
-
-    updateActiveIndex();
-    api.on("select", updateActiveIndex);
-    api.on("reInit", updateActiveIndex);
-
-    return () => {
-      api.off("select", updateActiveIndex);
-      api.off("reInit", updateActiveIndex);
-    };
-  }, [api]);
-
-  useEffect(() => {
-    setShortActiveIndex(0);
-  }, [items.length]);
-
-  if (loading && postcards.length === 0) {
-    return <div className="mx-auto h-[260px] w-full max-w-6xl animate-pulse rounded-[15px] bg-muted/40 md:h-[320px]" />;
-  }
-
-  const renderPostcard = (item: (typeof items)[number]) => {
+  const renderPostcard = useCallback((item: (typeof items)[number]) => {
     const e = EMOTIONS[item.emotion];
     const v = e.variants[0];
     const pixelColors = getEmotionPixelColors(v);
@@ -378,78 +349,55 @@ const PostcardsCarousel = () => {
         </article>
       </PixelCard>
     );
-  };
+  }, []);
 
-  if (isShortPostcardList) {
-    const getItemAtOffset = (offset: number) => {
-      const nextIndex = (shortActiveIndex + offset + items.length) % items.length;
-      return items[nextIndex];
-    };
+  const stackCards = useMemo(() => items.map((item) => renderPostcard(item)), [items, renderPostcard]);
+  const canNavigate = items.length > 1;
+  const showNavigation = items.length > 0;
 
-    const navigateShortList = (direction: 1 | -1) => {
-      if (items.length < 2) return;
-      setShortActiveIndex((current) => (current + direction + items.length) % items.length);
-    };
-
-    return (
-      <div className="relative mx-auto max-w-6xl overflow-hidden">
-        <div className="flex items-center justify-center gap-5">
-          {([-1, 0, 1] as const).map((offset) => (
-            <div
-              key={`${getItemAtOffset(offset).id}-${offset}-${shortActiveIndex}`}
-              className={`shrink-0 basis-[78%] md:basis-[60%] lg:basis-[56%] ${
-                offset === 0 ? "scale-100 opacity-100" : "scale-[0.92] opacity-70"
-              }`}
-            >
-              {renderPostcard(getItemAtOffset(offset))}
-            </div>
-          ))}
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => navigateShortList(-1)}
-          className="absolute left-2 top-1/2 z-10 h-8 w-8 -translate-y-1/2 rounded-full border-ink/10 bg-card/90 shadow-soft backdrop-blur md:left-0"
-          aria-label="Postal anterior"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => navigateShortList(1)}
-          className="absolute right-2 top-1/2 z-10 h-8 w-8 -translate-y-1/2 rounded-full border-ink/10 bg-card/90 shadow-soft backdrop-blur md:right-0"
-          aria-label="Postal seguinte"
-        >
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-    );
+  if (loading && postcards.length === 0) {
+    return <div className="mx-auto h-[260px] w-full max-w-6xl animate-pulse rounded-[15px] bg-muted/40 md:h-[320px]" />;
   }
 
   return (
-    <div>
-      <Carousel setApi={setApi} opts={{ align: "center", loop: true }} className="mx-auto max-w-6xl">
-        <CarouselContent className="-ml-5">
-          {displayItems.map((item, index) => {
-            const isActive = index === activeIndex;
-            return (
-              <CarouselItem
-                key={item.renderId}
-                className={`basis-[78%] pl-5 transition-[opacity,transform] duration-500 ease-out md:basis-[60%] lg:basis-[56%] ${
-                  isActive ? "scale-100 opacity-100" : "scale-[0.92] opacity-70"
-                }`}
-              >
-                {renderPostcard(item)}
-              </CarouselItem>
-            );
-          })}
-        </CarouselContent>
-        <CarouselPrevious className="left-2 z-10 flex border-ink/10 bg-card/90 shadow-soft backdrop-blur md:-left-12" />
-        <CarouselNext className="right-2 z-10 flex border-ink/10 bg-card/90 shadow-soft backdrop-blur md:-right-12" />
-      </Carousel>
+    <div className="relative mx-auto flex w-full max-w-6xl justify-center overflow-visible px-8 md:px-14">
+      <div className="relative aspect-[2/1] w-full max-w-[1024px]">
+        <Stack
+          ref={stackRef}
+          randomRotation
+          sensitivity={180}
+          sendToBackOnClick
+          mobileClickOnly
+          cards={stackCards}
+          animationConfig={{ stiffness: 260, damping: 22 }}
+        />
+      </div>
+      {showNavigation && (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={!canNavigate}
+            onClick={() => canNavigate && stackRef.current?.previous()}
+            className="absolute left-3 top-1/2 z-30 h-11 w-11 -translate-y-1/2 rounded-full border-ink/10 bg-card text-ink shadow-[0_2px_12px_rgba(32,27,22,0.14)] backdrop-blur hover:bg-card md:left-6"
+            aria-label="Postal anterior"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={!canNavigate}
+            onClick={() => canNavigate && stackRef.current?.next()}
+            className="absolute right-3 top-1/2 z-30 h-11 w-11 -translate-y-1/2 rounded-full border-ink/10 bg-card text-ink shadow-[0_2px_12px_rgba(32,27,22,0.14)] backdrop-blur hover:bg-card md:right-6"
+            aria-label="Postal seguinte"
+          >
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        </>
+      )}
     </div>
   );
 };
