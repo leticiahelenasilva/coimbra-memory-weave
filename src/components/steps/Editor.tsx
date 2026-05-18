@@ -214,7 +214,6 @@ export const Editor = ({ memory, onSend, initialEmotion }: Props) => {
                     emotionLabel={emotion.label}
                     variant={variant}
                     editable={!flying}
-                    showEditHint
                     postcardRef={postcardRef}
                     onMemoryChange={(nextMemory) => setEditedMemory(nextMemory)}
                     onMemoryKeyDown={(e) => {
